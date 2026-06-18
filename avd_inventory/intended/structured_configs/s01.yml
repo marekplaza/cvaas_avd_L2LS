@@ -1,0 +1,197 @@
+aaa_root:
+  disabled: true
+config_end: true
+enable_password:
+  disabled: true
+ethernet_interfaces:
+- name: Ethernet1
+  description: P2P_l01_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 100.65.0.0/31
+  peer: l01
+  peer_interface: Ethernet1
+  peer_type: l3leaf
+  switchport:
+    enabled: false
+- name: Ethernet2
+  description: P2P_l02_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 100.65.0.4/31
+  peer: l02
+  peer_interface: Ethernet1
+  peer_type: l3leaf
+  switchport:
+    enabled: false
+- name: Ethernet3
+  description: P2P_l03_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 100.65.0.8/31
+  peer: l03
+  peer_interface: Ethernet1
+  peer_type: l3leaf
+  switchport:
+    enabled: false
+- name: Ethernet4
+  description: P2P_l04_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 100.65.0.12/31
+  peer: l04
+  peer_interface: Ethernet1
+  peer_type: l3leaf
+  switchport:
+    enabled: false
+hostname: s01
+ip_routing: true
+is_deployed: true
+loopback_interfaces:
+- name: Loopback0
+  description: ROUTER_ID
+  shutdown: false
+  ip_address: 100.64.255.1/32
+management_api_http:
+  enable_https: true
+  enable_vrfs:
+  - name: MGMT
+management_interfaces:
+- name: Management0
+  description: OOB_MANAGEMENT
+  shutdown: false
+  vrf: MGMT
+  ip_address: 10.0.1.1/16
+  type: oob
+  gateway: 10.0.0.1
+metadata:
+  platform: cEOS
+  fabric_name: AVD_FABRIC
+  cv_tags:
+    device_tags:
+    - name: topology_hint_fabric
+      value: AVD_FABRIC
+    - name: topology_hint_type
+      value: spine
+ntp:
+  local_interface:
+    name: Management0
+    vrf: MGMT
+  servers:
+  - name: time.google.com
+    preferred: true
+    vrf: MGMT
+  - name: time.windows.com
+    vrf: MGMT
+  - name: time.apple.com
+    vrf: MGMT
+prefix_lists:
+- name: PL-LOOPBACKS-EVPN-OVERLAY
+  sequence_numbers:
+  - sequence: 10
+    action: permit 100.64.255.0/24 eq 32
+route_maps:
+- name: RM-CONN-2-BGP
+  sequence_numbers:
+  - sequence: 10
+    type: permit
+    match:
+    - ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY
+router_bfd:
+  multihop:
+    interval: 300
+    min_rx: 300
+    multiplier: 3
+router_bgp:
+  as: '65100'
+  router_id: 100.64.255.1
+  maximum_paths:
+    paths: 4
+    ecmp: 4
+  bgp:
+    default:
+      ipv4_unicast: false
+  peer_groups:
+  - name: IPv4-UNDERLAY-PEERS
+    type: ipv4
+    send_community: all
+    maximum_routes: 12000
+  - name: EVPN-OVERLAY-PEERS
+    type: evpn
+    next_hop_unchanged: true
+    update_source: Loopback0
+    bfd: true
+    ebgp_multihop: 3
+    send_community: all
+    maximum_routes: 0
+  neighbors:
+  - ip_address: 100.65.0.1
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65101'
+    peer: l01
+    description: l01_Ethernet1
+  - ip_address: 100.65.0.5
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65101'
+    peer: l02
+    description: l02_Ethernet1
+  - ip_address: 100.65.0.9
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65102'
+    peer: l03
+    description: l03_Ethernet1
+  - ip_address: 100.65.0.13
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65102'
+    peer: l04
+    description: l04_Ethernet1
+  - ip_address: 100.65.255.3
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65101'
+    peer: l01
+    description: l01_Loopback0
+  - ip_address: 100.65.255.4
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65101'
+    peer: l02
+    description: l02_Loopback0
+  - ip_address: 100.65.255.5
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65102'
+    peer: l03
+    description: l03_Loopback0
+  - ip_address: 100.65.255.6
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65102'
+    peer: l04
+    description: l04_Loopback0
+  redistribute:
+    connected:
+      enabled: true
+      route_map: RM-CONN-2-BGP
+  address_family_evpn:
+    peer_groups:
+    - name: EVPN-OVERLAY-PEERS
+      activate: true
+  address_family_ipv4:
+    peer_groups:
+    - name: IPv4-UNDERLAY-PEERS
+      activate: true
+    - name: EVPN-OVERLAY-PEERS
+      activate: false
+service_routing_protocols_model: multi-agent
+spanning_tree:
+  mode: none
+static_routes:
+- vrf: MGMT
+  destination_address_prefix: 0.0.0.0/0
+  gateway: 10.0.0.1
+transceiver_qsfp_default_mode_4x10: true
+vlan_internal_order:
+  allocation: ascending
+  range:
+    beginning: 1006
+    ending: 1199
+vrfs:
+- name: MGMT
+  ip_routing: false
