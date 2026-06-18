@@ -7,4 +7,4 @@
 
     - name: Run ANTA on EOS devices
       ansible.builtin.import_role:
-        name: arista.avd.anta_runner
+        name: arista.avd.eos_validate_state
