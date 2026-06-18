@@ -154,7 +154,45 @@ make test
 
 AVD (`eos_validate_state`) weryfikuje stan BGP, interfejsów, MLAG, EVPN.
 
-### 5. Sprawdź diff przed deployem
+### 5. Weryfikacja ręczna — komendy diagnostyczne
+
+Po deployu możesz sprawdzić stan protokołów bezpośrednio na urządzeniach (np. przez SSH lub `docker exec`):
+
+#### BGP Underlay (IPv4)
+
+```
+show ip bgp summary
+```
+
+Sprawdza sesje eBGP IPv4 między spine a leaf. Wszystkie sesje powinny być w stanie `Estab`.
+
+#### BGP EVPN Overlay
+
+```
+show bgp evpn summary
+```
+
+Weryfikuje sesje eBGP EVPN między leaf a spine (overlay). Spine pełni rolę route-reflector.
+
+#### Prefiksy IP propagowane przez EVPN (type-5)
+
+```
+show bgp evpn route-type ip-prefix ipv4
+```
+
+Wyświetla trasy IP (type-5 IP Prefix) rozgłaszane przez EVPN — widoczne po poprawnym skonfigurowaniu VRF i redistribucji.
+
+#### MAC/IP bindings (type-2)
+
+```
+show bgp evpn route-type mac-ip
+```
+
+Pokazuje wpisy MAC+IP (type-2) nauczone z VXLAN — weryfikacja działania EVPN L2.
+
+---
+
+### 6. Sprawdź diff przed deployem
 
 ```bash
 make diff
@@ -162,7 +200,7 @@ make diff
 
 Pokazuje różnicę między konfiguracją running a zaprojektowaną przez AVD (dry-run, bez zmian).
 
-### 6. Zatrzymaj lab
+### 7. Zatrzymaj lab
 
 ```bash
 make stop
