@@ -34,6 +34,12 @@ deploy_cvp: ## Deploy AVD configs using CloudVision
 	CV_API_TOKEN=$${CV_API_TOKEN:-$$(cat $(CURRENT_DIR)/clab/cv-api-token)} \
 	ansible-playbook playbooks/avd_deploy_cvp.yml
 
+.PHONY: decommission_cvp
+decommission_cvp: ## Decommission all lab devices from CVaaS inventory
+	cd $(CURRENT_DIR)/avd_inventory && \
+	CV_API_TOKEN=$${CV_API_TOKEN:-$$(cat $(CURRENT_DIR)/clab/cv-api-token)} \
+	ansible-playbook playbooks/cvp_decommission.yml
+
 .PHONY: diff
 diff: ## Show the diff between running config and designed config
 	cd $(CURRENT_DIR)/avd_inventory; ansible-playbook --diff --check playbooks/avd_deploy.yml

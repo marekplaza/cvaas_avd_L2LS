@@ -1,0 +1,67 @@
+---
+- name: Decommission lab devices from CVaaS
+  hosts: lab_cv_instance
+  connection: local
+  gather_facts: false
+  vars:
+    ansible_user: cvaas
+    ansible_password: "{{ lookup('ansible.builtin.env', 'CV_API_TOKEN') }}"
+    devices_to_decommission:
+      - hostname: s01
+        serialNumber: 1C68470A1E0CD6EF7418D78A9582A422
+        parentContainerName: s01
+      - hostname: s02
+        serialNumber: 1C68470A1E0CD6EF7418D78A9582025C
+        parentContainerName: s02
+      - hostname: l01
+        serialNumber: 1C68470A1E0CD6EF7418D78A95825672
+        parentContainerName: l01
+      - hostname: l02
+        serialNumber: 1C68470A1E0CD6EF7418D78A9582DD32
+        parentContainerName: l02
+      - hostname: l03
+        serialNumber: 1C68470A1E0CD6EF7418D78A95820CFB
+        parentContainerName: l03
+      - hostname: l04
+        serialNumber: 1C68470A1E0CD6EF7418D78A95820220
+        parentContainerName: l04
+  tasks:
+
+    - name: "Decommission {{ item.hostname }} (SN: {{ item.serialNumber }}) from CVaaS"
+      arista.cvp.cv_device_v3:
+        devices:
+          - hostname: "{{ item.hostname }}"
+            serialNumber: "{{ item.serialNumber }}"
+            parentContainerName: "{{ item.parentContainerName }}"
+        state: absent
+        search_key: serialNumber
+        inventory_mode: loose
+      loop: "{{ devices_to_decommission }}"
+      loop_control:
+        label: "{{ item.hostname }}"
+      async: 300
+      poll: 0
+      ignore_errors: true
+      register: async_jobs
+
+    - name: Wait for all decommissions to complete
+      ansible.builtin.async_status:
+        jid: "{{ item.ansible_job_id }}"
+      loop: "{{ async_jobs.results }}"
+      loop_control:
+        label: "{{ item.item.hostname }}"
+      register: job_results
+      until: job_results.finished
+      retries: 30
+      delay: 10
+      ignore_errors: true
+
+    - name: Decommission summary
+      ansible.builtin.debug:
+        msg: >-
+          {{ item.item.item.hostname }} ({{ item.item.item.serialNumber }}):
+          {{ 'SKIPPED — ' ~ (item.msg | default('already removed or not found'))
+             if item.failed else 'OK — decommissioned' }}
+      loop: "{{ job_results.results }}"
+      loop_control:
+        label: "{{ item.item.item.hostname }}"
