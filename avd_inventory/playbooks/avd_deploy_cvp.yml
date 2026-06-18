@@ -7,7 +7,7 @@
     cv_server: "{{ lookup('ansible.builtin.env', 'CVURL', default='www.cv-prod-euwest-2.arista.io') }}"
     cv_token: "{{ lookup('ansible.builtin.env', 'CV_API_TOKEN') }}"
     cv_verify_certs: false
-    cv_submit_workspace: false
+    cv_submit_workspace: true
     cv_run_change_control: false
   tasks:
 
