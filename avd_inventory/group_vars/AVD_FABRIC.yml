@@ -8,6 +8,7 @@ generate_cv_tags:
 spine:
   defaults:
     platform: cEOS
+    mgmt_interface: Management1
     bgp_as: 65100
     loopback_ipv4_pool: 100.64.255.0/24
   nodes:
@@ -21,6 +22,7 @@ spine:
 l3leaf:
   defaults:
     platform: cEOS
+    mgmt_interface: Management1
     loopback_ipv4_pool: 100.65.255.0/24
     loopback_ipv4_offset: 2
     vtep_loopback_ipv4_pool: 100.65.254.0/24
