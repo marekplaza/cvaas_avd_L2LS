@@ -31,17 +31,11 @@ ntp_settings:
     - name: time.windows.com
     - name: time.apple.com
 
-aaa_settings:
-  # Local Users
-  local_users:
-    - name: arista
-      privilege: 15
-      role: network-admin
-      sha512_password: "{{ ansible_password | password_hash(rounds=5000, salt=1) }}"
-  # AAA Authorization Settings
-  authorization:
-    exec:
-      default: local
+local_users:
+  - name: arista
+    privilege: 15
+    role: network-admin
+    sha512_password: "$6$GgJDMeBVxpUHjqLw$LUbUYX7pnVUjvcxoaAeGW0llEhfuX9XKiQRRx7oqFTuHUEYeFxQmDwhT.XcQvAiJsOG7YtAoTGuV7nRTBxF6r1"
 
 ansible_user: arista
 ansible_password: arista
