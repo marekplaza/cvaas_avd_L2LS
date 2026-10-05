@@ -1,12 +1,13 @@
 ---
 mgmt_gateway: 10.0.0.1
-mgmt_interface: Management1
+mgmt_interface_settings:
+  interface: Management1
 
-custom_structured_configuration_ip_name_servers:
-  - ip_address: 8.8.8.8
-    vrf: MGMT
-
-custom_structured_configuration_dns_domain: avd.lab
+dns_settings:
+  domain: avd.lab
+  servers:
+    - ip_address: 8.8.8.8
+      vrf: use_mgmt_interface_vrf
 
 custom_structured_configuration_daemon_terminattr:
   cvaddrs:
@@ -20,6 +21,7 @@ custom_structured_configuration_daemon_terminattr:
   ingestexclude: /Sysdb/cell/1/agent,/Sysdb/cell/2/agent
 
 management_eapi:
+  enabled: true
   enable_http: false
   enable_https: true
 
@@ -31,11 +33,12 @@ ntp_settings:
     - name: time.windows.com
     - name: time.apple.com
 
-local_users:
-  - name: arista
-    privilege: 15
-    role: network-admin
-    sha512_password: "$6$GgJDMeBVxpUHjqLw$LUbUYX7pnVUjvcxoaAeGW0llEhfuX9XKiQRRx7oqFTuHUEYeFxQmDwhT.XcQvAiJsOG7YtAoTGuV7nRTBxF6r1"
+aaa_settings:
+  local_users:
+    - name: arista
+      privilege: 15
+      role: network-admin
+      sha512_password: "$6$GgJDMeBVxpUHjqLw$LUbUYX7pnVUjvcxoaAeGW0llEhfuX9XKiQRRx7oqFTuHUEYeFxQmDwhT.XcQvAiJsOG7YtAoTGuV7nRTBxF6r1"
 
 ansible_user: arista
 ansible_password: arista
