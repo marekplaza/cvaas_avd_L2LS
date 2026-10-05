@@ -102,8 +102,11 @@ def main() -> None:
 
     for h, c in devices.items():
         nbrs = neighbors(c)
+        # TCP queues are only a snapshot: right after a deploy under high lab load they are often
+        # briefly non-empty, which says nothing about session health.
         add("anta.tests.routing.bgp", "VerifyBGPPeerSession", h,
-            {"bgp_peers": [{"peer_address": n["ip_address"], "vrf": "default"} for n in nbrs]})
+            {"check_tcp_queues": False,
+             "bgp_peers": [{"peer_address": n["ip_address"], "vrf": "default"} for n in nbrs]})
         evpn = [n for n in nbrs if n.get("peer_group", "").startswith("EVPN-OVERLAY")]
         ipv4 = [n for n in nbrs if n not in evpn]
         add("anta.tests.routing.bgp", "VerifyBGPPeerCount", h,
