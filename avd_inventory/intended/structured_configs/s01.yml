@@ -96,13 +96,19 @@ management_interfaces:
 metadata:
   is_deployed: true
   platform: cEOS
+  pod_name: marpla_POD1
+  dc_name: marpla_DC1
   fabric_name: AVD_FABRIC
   validate_hardware:
     enabled: false
   cv_tags:
     device_tags:
+    - name: topology_hint_datacenter
+      value: marpla_DC1
     - name: topology_hint_fabric
       value: AVD_FABRIC
+    - name: topology_hint_pod
+      value: marpla_POD1
     - name: topology_hint_type
       value: spine
 ntp:

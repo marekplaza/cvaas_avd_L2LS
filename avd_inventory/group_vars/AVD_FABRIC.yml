@@ -1,5 +1,8 @@
 ---
 fabric_name: AVD_FABRIC
+# Sent to CloudVision as topology_hint_datacenter / topology_hint_pod for Network Hierarchy
+dc_name: marpla_DC1
+pod_name: marpla_POD1
 
 generate_cv_tags:
   topology_hints: true

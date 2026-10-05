@@ -17,12 +17,12 @@
 
 | POD | Type | Node | Management IP | Platform | Provisioned in CloudVision | Serial Number |
 | --- | ---- | ---- | ------------- | -------- | -------------------------- | ------------- |
-| AVD_FABRIC | l3leaf | l01 | 10.0.2.1/16 | cEOS | Provisioned | - |
-| AVD_FABRIC | l3leaf | l02 | 10.0.2.2/16 | cEOS | Provisioned | - |
-| AVD_FABRIC | l3leaf | l03 | 10.0.2.3/16 | cEOS | Provisioned | - |
-| AVD_FABRIC | l3leaf | l04 | 10.0.2.4/16 | cEOS | Provisioned | - |
-| AVD_FABRIC | spine | s01 | 10.0.1.1/16 | cEOS | Provisioned | - |
-| AVD_FABRIC | spine | s02 | 10.0.1.2/16 | cEOS | Provisioned | - |
+| marpla_POD1 | l3leaf | l01 | 10.0.2.1/16 | cEOS | Provisioned | - |
+| marpla_POD1 | l3leaf | l02 | 10.0.2.2/16 | cEOS | Provisioned | - |
+| marpla_POD1 | l3leaf | l03 | 10.0.2.3/16 | cEOS | Provisioned | - |
+| marpla_POD1 | l3leaf | l04 | 10.0.2.4/16 | cEOS | Provisioned | - |
+| marpla_POD1 | spine | s01 | 10.0.1.1/16 | cEOS | Provisioned | - |
+| marpla_POD1 | spine | s02 | 10.0.1.2/16 | cEOS | Provisioned | - |
 
 > Provision status is based on Ansible inventory declaration and do not represent real status from CloudVision.
 
@@ -80,12 +80,12 @@
 
 | POD | Node | Loopback0 |
 | --- | ---- | --------- |
-| AVD_FABRIC | l01 | 100.65.255.3/32 |
-| AVD_FABRIC | l02 | 100.65.255.4/32 |
-| AVD_FABRIC | l03 | 100.65.255.5/32 |
-| AVD_FABRIC | l04 | 100.65.255.6/32 |
-| AVD_FABRIC | s01 | 100.64.255.1/32 |
-| AVD_FABRIC | s02 | 100.64.255.2/32 |
+| marpla_POD1 | l01 | 100.65.255.3/32 |
+| marpla_POD1 | l02 | 100.65.255.4/32 |
+| marpla_POD1 | l03 | 100.65.255.5/32 |
+| marpla_POD1 | l04 | 100.65.255.6/32 |
+| marpla_POD1 | s01 | 100.64.255.1/32 |
+| marpla_POD1 | s02 | 100.64.255.2/32 |
 
 ### VTEP Loopback VXLAN Tunnel Source Interfaces (VTEPs Only)
 
@@ -97,7 +97,7 @@
 
 | POD | Node | Loopback1 |
 | --- | ---- | --------- |
-| AVD_FABRIC | l01 | 100.65.254.3/32 |
-| AVD_FABRIC | l02 | 100.65.254.3/32 |
-| AVD_FABRIC | l03 | 100.65.254.5/32 |
-| AVD_FABRIC | l04 | 100.65.254.5/32 |
+| marpla_POD1 | l01 | 100.65.254.3/32 |
+| marpla_POD1 | l02 | 100.65.254.3/32 |
+| marpla_POD1 | l03 | 100.65.254.5/32 |
+| marpla_POD1 | l04 | 100.65.254.5/32 |
