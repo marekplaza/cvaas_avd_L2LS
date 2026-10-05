@@ -136,7 +136,7 @@ def dc_nodes(p, dc, ox, logical):
         x = ox + (190 if i == 1 else 600)
         if logical:
             label = (f"<b>{name}</b><br>AS {asb} · Lo0 10.10{dc}.0.{i}<br>VTEP Lo1 10.10{dc}.3.{i}"
-                     f"<br>EVPN route server + EVPN GW")
+                     f"<br>EVPN route server + EVPN GW<br>RD 10.10{dc}.0.{i}:&lt;VLAN|vrf_id&gt; (też domain remote)")
             ids[f"s{i}"] = p.box(label, x, 170, 210, 70, BASE + GW)
         else:
             label = f"<b>{name}</b><br>spine · mgmt 10.30.{dc}1.{i}"
@@ -152,9 +152,9 @@ def dc_nodes(p, dc, ox, logical):
             vt = f"10.10{dc}.2.{first}"
             loc = int(f"{str(vlan)[0]}2{dc}")
             label = (f"<b>dc{dc}-{z}</b> · AS {zas}<br>MLAG l0{first} + l0{first + 1}<br>VTEP {vt} (shared)"
-                     f"<br>VRF {z.upper()} · L3VNI {octet}009000"
-                     f"<br><b>VLAN {vlan}</b> → VNI {octet}000{vlan} <i>(DCI)</i><br>&nbsp;&nbsp;GW 10.{octet}.10.1"
-                     f"<br>VLAN {loc} → VNI {octet}000{loc} <i>(local)</i><br>&nbsp;&nbsp;GW 10.{octet}.2{dc}.1"
+                     f"<br>VRF {z.upper()} · L3VNI {octet}009000 · RT {octet}0:{octet}0"
+                     f"<br><b>VLAN {vlan}</b> → VNI {octet}000{vlan} · RT {vlan}:{vlan} <i>(DCI)</i><br>&nbsp;&nbsp;GW 10.{octet}.10.1"
+                     f"<br>VLAN {loc} → VNI {octet}000{loc} · RT {loc}:{loc} <i>(local)</i><br>&nbsp;&nbsp;GW 10.{octet}.2{dc}.1"
                      + ("<br>VLAN 399 → VNI 3000399 <i>(FW HA, L2)</i>" if z == "priv" else ""))
             ids[z] = p.box(label, zx + 15, 450, 280, 200, BASE + f"fillColor=#ffffff;strokeColor={stroke};align=left;spacingLeft=6;")
         else:
@@ -409,8 +409,95 @@ def routing_page(dc, sc):
     return p
 
 
+def rdrt_page(sc):
+    p = Page("RD i RT", 2160, 1900)
+    p.box("<b>RD i RT – schemat i rozgłaszanie tras EVPN przez bramy</b> (dane z AVD structured_configs; ścieżka trasy sprawdzona na labie)",
+          20, 15, 1700, 30, TEXT + "fontSize=18;")
+    # --- route propagation chain (live trace) ---
+    p.box("<b>Przykład:</b> trasa type-2 MAC/IP węzła FW DC1 (10.3.10.11, MAC 001c.7331.18f2) w VLAN 310 / strefa priv – "
+          "RT nie zmienia się na całej ścieżce, zmieniają się RD i next-hop na bramach", 20, 60, 2100, 30, TEXT + "fontSize=13;")
+    steps = [
+        ("dc1-priv-l03 (+ l04)", "leaf, AS 65102", "origin (Local)",
+         "RD 10.101.1.3:310 (l04: 10.101.1.4:310)<br>RT 310:310 (MAC-VRF) + 30:30 (VRF PRIV)<br>NH 10.101.2.3 (VTEP MLAG)", ZONE["priv"]),
+        ("dc1-s01 / s02", "RS + EVPN GW, AS 65100", "re-origination → domain remote",
+         "lokalnie: przekazuje bez zmian (next-hop-unchanged)<br>do DC2: <b>RD 10.101.0.1:310</b> (s02: 10.101.0.2:310)<br>"
+         "RT 310:310 + 30:30<br><b>NH 10.101.3.1</b> (VTEP bramy)", ("#e1d5e7", "#9673a6")),
+        ("dc2-s01 / s02", "RS + EVPN GW, AS 65200", "re-origination → domain local",
+         "odbiera jako <i>remote</i> (RD 10.101.0.x:310)<br>do leafów DC2: <b>RD 10.102.0.1:310</b> (s02: 10.102.0.2:310)<br>"
+         "RT 310:310 + 30:30<br><b>NH 10.102.3.1</b>", ("#e1d5e7", "#9673a6")),
+        ("dc2-priv-l03 / l04", "leaf, AS 65202", "import",
+         "widzi tylko RD bram DC2 (10.102.0.1:310, 10.102.0.2:310)<br>import po RT 310:310 → VLAN 310, 30:30 → VRF PRIV<br>"
+         "NH 10.102.3.1 / 10.102.3.2 – tunel VXLAN tylko do bram DC2", ZONE["priv"]),
+    ]
+    prev = None
+    for i, (name, role, what, body, (fill, stroke)) in enumerate(steps):
+        b = p.box(f"<b>{name}</b><br><i>{role}</i><br><u>{what}</u><br><br>{body}", 30 + i * 545, 100, 400, 170,
+                  BASE + f"fillColor={fill};strokeColor={stroke};align=left;spacingLeft=8;verticalAlign=top;")
+        if prev:
+            p.edge(prev, b, "endArrow=classic;html=1;strokeWidth=3;strokeColor=#2d7600;",
+                   ["eBGP EVPN<br>EVPN-OVERLAY-PEERS", "eBGP EVPN multihop<br>EVPN-OVERLAY-CORE<br>(DCI)", "eBGP EVPN<br>EVPN-OVERLAY-PEERS"][i - 1])
+        prev = b
+    # --- RT table ---
+    s1 = sc["marpla-dc-1-s01"]["router_bgp"]
+    gw_vlans = {v["id"] for v in s1["vlans"]}
+    rows, vrfs = [], {}
+    for h, c in sc.items():
+        for v in c["router_bgp"].get("vrfs", []):
+            vrfs[v["name"]] = v["route_targets"]["import"][0]["route_targets"][0]
+    vx = {}
+    for h, c in sc.items():
+        for v in c.get("vxlan_interface", {}).get("vxlan1", {}).get("vxlan", {}).get("vlans", []):
+            vx[v["id"]] = v["vni"]
+    vrf_vni = {v["name"]: v["vni"] for c in sc.values() for v in c.get("vxlan_interface", {}).get("vxlan1", {}).get("vxlan", {}).get("vrfs", [])}
+    zone_of_vlan = lambda vid: {"1": "ext", "2": "wew", "3": "priv"}[str(vid)[0]]
+    for vrf in ("EXT", "WEW", "PRIV"):
+        rows.append(f"<tr style='background:#f0f0f0'><td><b>{vrf.lower()}</b></td><td>VRF {vrf} (IP-VRF, type-5)</td><td>{vrf_vni[vrf]}</td>"
+                    f"<td><b>{vrfs[vrf]}</b></td><td>{vrfs[vrf]}</td><td>wszystkie leafy strefy + bramy</td></tr>")
+        for vid in sorted(k for k in vx if zone_of_vlan(k) == vrf.lower()):
+            dci = vid in gw_vlans
+            rows.append(f"<tr><td></td><td>VLAN {vid} (MAC-VRF, type-2/3)</td><td>{vx[vid]}</td><td><b>{vid}:{vid}</b></td>"
+                        f"<td>{f'{vid}:{vid}' if dci else '– (nie idzie przez DCI)'}</td>"
+                        f"<td>{'leafy strefy w DC1 + DC2, bramy' if dci else ('tylko DC1' if str(vid)[2] == '1' else 'tylko DC2')}</td></tr>")
+    p.box("<b>Route Targets</b> – identyczne w DC1 i DC2 (te same definicje tenantów), unikalne per strefa"
+          "<table border='1' cellpadding='3' style='border-collapse:collapse;font-size:11px;margin-top:6px'>"
+          "<tr><th>strefa</th><th>instancja</th><th>VNI</th><th>RT (import/export)</th><th>RT evpn domain remote (bramy)</th><th>gdzie</th></tr>"
+          + "".join(rows) + "</table>", 20, 300, 1080, 560, TEXT + "spacing=8;fillColor=#ffffff;strokeColor=#999999;")
+    # --- explanation ---
+    p.box("<b>Jak są budowane</b><br>"
+          "• <b>RD MAC-VRF</b> = &lt;Lo0 router-id&gt;:&lt;VLAN ID&gt; – np. 10.101.1.3:310<br>"
+          "• <b>RD IP-VRF</b> = &lt;Lo0&gt;:&lt;vrf_id&gt; – EXT 10, WEW 20, PRIV 30 – np. 10.101.1.3:30<br>"
+          "• <b>RT MAC-VRF</b> = &lt;VLAN&gt;:&lt;VLAN&gt;, <b>RT IP-VRF</b> = &lt;vrf_id&gt;:&lt;vrf_id&gt;<br>"
+          "&nbsp;&nbsp;(mac_vrf_id_base: 0 – 7-cyfrowe VNI nie zmieściłyby się w RD typu IP:liczba)<br>"
+          "• RD jest unikalny per urządzenie (Lo0), RT wspólny dla całej strefy w obu DC<br><br>"
+          "<b>Bramy (spine'y)</b><br>"
+          "• <code>rd evpn domain remote</code> = ten sam &lt;Lo0&gt;:&lt;id&gt; – RD tras ogłaszanych do drugiego DC<br>"
+          "• <code>route-target import export evpn domain remote</code> = ten sam RT – tylko VLAN-y DCI: 110, 210, 310, 399<br>"
+          "• type-5 (IP-VRF) przechodzi przez <i>next-hop-self … inter-domain</i> z RT VRF-u<br>"
+          "• domain identifier (D-path): DC1 <b>65100:1</b>, DC2 <b>65200:2</b> – zapobiega zapętleniu tras między domenami<br>"
+          "• all-active multihoming bram: ES DC1 0000:0000:0001:0001:0001, ES-import RT 00:00:00:01:00:01;<br>"
+          "&nbsp;&nbsp;DC2 0000:0000:0002:0002:0002, ES-import RT 00:00:00:02:00:02<br><br>"
+          "<b>Separacja stref</b>: leaf importuje tylko RT swojej strefy, więc VRF-y innych stref nie dostają tras. "
+          "Bez RTC (gałąź <i>single-domain</i>) trasy innych stref nadal docierają do tablicy BGP leafa – nie są tylko importowane.",
+          1130, 300, 1000, 560, TEXT + "spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;")
+    # --- RD per device ---
+    drows = []
+    for h in sorted(sc, key=lambda x: (x.split("-")[2], not x.split("-")[3].startswith("s"), x)):
+        b = sc[h]["router_bgp"]
+        lo0 = next(l["ip_address"].split("/")[0] for l in sc[h]["loopback_interfaces"] if l["name"] == "Loopback0")
+        mac = ", ".join(f"{v['rd']}" for v in b.get("vlans", []))
+        ip = ", ".join(f"{v['name']} {v['rd']}" for v in b.get("vrfs", []))
+        rem = ", ".join(v["rd_evpn_domain"]["rd"] for v in b.get("vlans", []) if v.get("rd_evpn_domain"))
+        role = "RS + GW" if h.split("-")[3].startswith("s") else "leaf " + h.split("-")[3]
+        drows.append(f"<tr><td>{h}</td><td>{role}</td><td>{lo0}</td><td>{mac}</td><td>{ip}</td><td>{rem or '–'}</td></tr>")
+    p.box("<b>Route Distinguishers per urządzenie</b>"
+          "<table border='1' cellpadding='3' style='border-collapse:collapse;font-size:10px;margin-top:6px'>"
+          "<tr><th>urządzenie</th><th>rola</th><th>Lo0</th><th>RD MAC-VRF (VLAN)</th><th>RD IP-VRF</th><th>RD domain remote</th></tr>"
+          + "".join(drows) + "</table>", 20, 890, 2110, 640, TEXT + "spacing=8;fillColor=#ffffff;strokeColor=#999999;")
+    return p
+
+
 sc = load_sc()
-pages = [physical(), logical(), routing_page(1, sc), routing_page(2, sc)]
+pages = [physical(), logical(), routing_page(1, sc), routing_page(2, sc), rdrt_page(sc)]
 with open(OUT, "w", encoding="utf-8") as f:
     f.write('<mxfile host="app.diagrams.net" type="device">' + "".join(pg.xml() for pg in pages) + "</mxfile>\n")
 if Image is not None and os.environ.get("DRAWIO_PREVIEW"):
