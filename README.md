@@ -15,14 +15,14 @@ Sieć składa się z 8 węzłów cEOS-lab:
 
 | Hostname | Rola | OS | Management IP |
 |----------|------|----|---------------|
-| marpla-s01 | Spine | cEOS-lab 4.34.2F | 10.0.1.1 |
-| marpla-s02 | Spine | cEOS-lab 4.34.2F | 10.0.1.2 |
-| marpla-l01 | L3Leaf (pod0, MLAG) | cEOS-lab 4.34.2F | 10.0.2.1 |
-| marpla-l02 | L3Leaf (pod0, MLAG) | cEOS-lab 4.34.2F | 10.0.2.2 |
-| marpla-l03 | L3Leaf (pod1, MLAG) | cEOS-lab 4.34.2F | 10.0.2.3 |
-| marpla-l04 | L3Leaf (pod1, MLAG) | cEOS-lab 4.34.2F | 10.0.2.4 |
-| marpla-h01 | Host | cEOS-lab 4.34.2F | 10.0.3.1 |
-| marpla-h02 | Host | cEOS-lab 4.34.2F | 10.0.3.2 |
+| marpla-s01 | Spine | cEOS-lab 4.35.6M | 10.0.1.1 |
+| marpla-s02 | Spine | cEOS-lab 4.35.6M | 10.0.1.2 |
+| marpla-l01 | L3Leaf (pod0, MLAG) | cEOS-lab 4.35.6M | 10.0.2.1 |
+| marpla-l02 | L3Leaf (pod0, MLAG) | cEOS-lab 4.35.6M | 10.0.2.2 |
+| marpla-l03 | L3Leaf (pod1, MLAG) | cEOS-lab 4.35.6M | 10.0.2.3 |
+| marpla-l04 | L3Leaf (pod1, MLAG) | cEOS-lab 4.35.6M | 10.0.2.4 |
+| marpla-h01 | Host | cEOS-lab 4.35.6M | 10.0.3.1 |
+| marpla-h02 | Host | cEOS-lab 4.35.6M | 10.0.3.2 |
 
 Sieć szkieletowa: **EVPN MLAG**, dwie pary leaf-ów w MLAG peer-link, uplinki do dwóch spine-ów (eBGP underlay + EVPN overlay).
 
@@ -49,15 +49,18 @@ pip3 install pyavd
 
 ### Obraz cEOS-lab
 
-Wymagany obraz: **`arista/ceos:4.34.2F`** (lub nowszy, tagowany jako `latest`).
+Wymagany obraz: **`arista/ceos:4.35.6M`** (ustawiony w `clab/topology.clab.yml`).
 
 ```bash
 # Sprawdź dostępne obrazy
 docker images arista/ceos
 
-# Jeśli latest != 4.34.2F, retag:
-docker tag arista/ceos:4.34.2F arista/ceos:latest
+# Pobierz i zaimportuj obraz z arista.com (wymaga tokena: My Profile -> Access Token)
+export ARISTA_TOKEN=<token>
+./get_ceos.sh -v 4.35.6M     # albo ./get_ceos.sh dla najnowszego wydania M
 ```
+
+`get_ceos.sh` korzysta z `curl`, bo arista.com blokuje obecnie klientów HTTP w Pythonie (w tym `ardl`) stroną „Client Challenge”.
 
 Obraz cEOS-lab dostępny po rejestracji na [arista.com](https://www.arista.com/en/support/software-download).
 

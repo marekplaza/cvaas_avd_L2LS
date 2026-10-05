@@ -10,7 +10,7 @@ topology:
     kinds:
         ceos:
             enforce-startup-config: true
-            image: arista/ceos:latest
+            image: arista/ceos:4.35.6M
             binds:
             - interface_mapping.json:/mnt/flash/EosIntfMapping.json:ro
             # extras.ceos-copy-to-flash under defaults is not applied by containerlab 0.76,
