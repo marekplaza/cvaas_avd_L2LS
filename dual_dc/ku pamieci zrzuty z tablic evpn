@@ -1,0 +1,154 @@
+### sigle-domain bez RTC:
+
+BGP routing table information for VRF default
+Router identifier 10.101.1.3, local AS number 65102
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending best path selection
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >Ec    RD: 10.101.1.1:210 mac-ip 001c.7331.18f2
+                                 10.101.2.1            -       100     0       65100 65101 i
+ *  ec    RD: 10.101.1.1:210 mac-ip 001c.7331.18f2
+                                 10.101.2.1            -       100     0       65100 65101 i
+ * >Ec    RD: 10.101.1.2:210 mac-ip 001c.7331.18f2
+                                 10.101.2.1            -       100     0       65100 65101 i
+ *  ec    RD: 10.101.1.2:210 mac-ip 001c.7331.18f2
+                                 10.101.2.1            -       100     0       65100 65101 i
+ * >Ec    RD: 10.101.1.1:210 mac-ip 001c.7331.18f2 10.2.10.11
+                                 10.101.2.1            -       100     0       65100 65101 i
+ *  ec    RD: 10.101.1.1:210 mac-ip 001c.7331.18f2 10.2.10.11
+                                 10.101.2.1            -       100     0       65100 65101 i
+ * >Ec    RD: 10.101.1.2:210 mac-ip 001c.7331.18f2 10.2.10.11
+                                 10.101.2.1            -       100     0       65100 65101 i
+ *  ec    RD: 10.101.1.2:210 mac-ip 001c.7331.18f2 10.2.10.11
+                                 10.101.2.1            -       100     0       65100 65101 i
+ * >      RD: 10.101.0.1:210 mac-ip 001c.73fa.4797
+                                 10.101.3.1            -       100     0       65100 65200 65201 i
+ * >      RD: 10.101.0.2:210 mac-ip 001c.73fa.4797
+                                 10.101.3.2            -       100     0       65100 65200 65201 i
+ * >      RD: 10.101.0.1:210 mac-ip 001c.73fa.4797 10.2.10.12
+                                 10.101.3.1            -       100     0       65100 65200 65201 i
+ * >      RD: 10.101.0.2:210 mac-ip 001c.73fa.4797 10.2.10.12
+                                 10.101.3.2            -       100     0       65100 65200 65201 i
+marpla-dc-1-priv-l03# 
+
+
+### single-domain with rtc  (address-family rt-membership)
+
+marpla-dc-1-priv-l03#sh bgp evpn extcommunity rt 210:210 route-type mac-ip
+BGP routing table information for VRF default
+Router identifier 10.101.1.3, local AS number 65102
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending best path selection
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+marpla-dc-1-priv-l03#
+
+# dostaje prefixy tylko z PRIV:
+
+marpla-dc-1-priv-l03#sh bgp evpn 
+(... jak ponizej...)
+
+marpla-dc-1-priv-l03#sh bgp evpn domain local 
+BGP routing table information for VRF default
+Router identifier 10.101.1.3, local AS number 65102
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending best path selection
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >      RD: 10.101.3.1:1 auto-discovery 0000:0000:0001:0001:0001
+                                 10.101.3.1            -       100     0       65100 i
+ * >      RD: 10.101.3.2:1 auto-discovery 0000:0000:0001:0001:0001
+                                 10.101.3.2            -       100     0       65100 i
+ * >      RD: 10.101.1.3:310 mac-ip 001c.7331.18f2
+                                 -                     -       -       0       i
+ * >      RD: 10.101.1.3:321 mac-ip 001c.7331.18f2
+                                 -                     -       -       0       i
+ * >      RD: 10.101.1.3:399 mac-ip 001c.7331.18f2
+                                 -                     -       -       0       i
+ * >      RD: 10.101.1.3:310 mac-ip 001c.7331.18f2 10.3.10.11
+                                 -                     -       -       0       i
+ * >      RD: 10.101.1.3:321 mac-ip 001c.7331.18f2 10.3.21.11
+                                 -                     -       -       0       i
+ * >      RD: 10.101.0.1:310 mac-ip 001c.73fa.4797
+                                 10.101.3.1            -       100     0       65100 65200 65202 i
+ * >      RD: 10.101.0.1:399 mac-ip 001c.73fa.4797
+                                 10.101.3.1            -       100     0       65100 65200 65202 i
+ * >      RD: 10.101.0.2:310 mac-ip 001c.73fa.4797
+                                 10.101.3.2            -       100     0       65100 65200 65202 i
+ * >      RD: 10.101.0.2:399 mac-ip 001c.73fa.4797
+                                 10.101.3.2            -       100     0       65100 65200 65202 i
+ * >      RD: 10.101.0.1:310 mac-ip 001c.73fa.4797 10.3.10.12
+                                 10.101.3.1            -       100     0       65100 65200 65202 i
+ * >      RD: 10.101.0.2:310 mac-ip 001c.73fa.4797 10.3.10.12
+                                 10.101.3.2            -       100     0       65100 65200 65202 i
+ * >      RD: 10.101.1.3:310 imet 10.101.2.3
+                                 -                     -       -       0       i
+ * >      RD: 10.101.1.3:321 imet 10.101.2.3
+                                 -                     -       -       0       i
+ * >      RD: 10.101.1.3:399 imet 10.101.2.3
+                                 -                     -       -       0       i
+ * >      RD: 10.101.0.1:310 imet 10.101.3.1
+                                 10.101.3.1            -       100     0       65100 i
+ * >      RD: 10.101.0.1:399 imet 10.101.3.1
+                                 10.101.3.1            -       100     0       65100 i
+ * >      RD: 10.101.0.2:310 imet 10.101.3.2
+                                 10.101.3.2            -       100     0       65100 i
+ * >      RD: 10.101.0.2:399 imet 10.101.3.2
+                                 10.101.3.2            -       100     0       65100 i
+ * >      RD: 10.101.0.1:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.1            -       100     0       65100 i
+ * >      RD: 10.101.0.2:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.2            -       100     0       65100 i
+ * >      RD: 10.101.1.3:30 ip-prefix 10.3.10.0/24
+                                 -                     -       -       0       i
+ *        RD: 10.101.1.3:30 ip-prefix 10.3.10.0/24
+                                 -                     -       100     0       ?
+ * >Ec    RD: 10.102.0.1:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.1            -       100     0       65100 65200 i
+ *  ec    RD: 10.102.0.1:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.2            -       100     0       65100 65200 i
+ * >Ec    RD: 10.102.0.2:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.1            -       100     0       65100 65200 i
+ *  ec    RD: 10.102.0.2:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.2            -       100     0       65100 65200 i
+ * >Ec    RD: 10.102.1.3:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.1            -       100     0       65100 65200 65202 i
+ *  ec    RD: 10.102.1.3:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.2            -       100     0       65100 65200 65202 i
+ * >Ec    RD: 10.102.1.4:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.1            -       100     0       65100 65200 65202 i
+ *  ec    RD: 10.102.1.4:30 ip-prefix 10.3.10.0/24
+                                 10.101.3.2            -       100     0       65100 65200 65202 i
+ * >      RD: 10.101.1.3:30 ip-prefix 10.3.10.12/32
+                                 -                     -       100     0       65100 65200 65202 ?
+ * >      RD: 10.101.1.3:30 ip-prefix 10.3.21.0/24
+                                 -                     -       -       0       i
+ *        RD: 10.101.1.3:30 ip-prefix 10.3.21.0/24
+                                 -                     -       100     0       ?
+ * >      RD: 10.101.1.3:30 ip-prefix 10.3.22.0/24
+                                 -                     -       100     0       65100 65200 65202 ?
+ * >Ec    RD: 10.102.1.3:30 ip-prefix 10.3.22.0/24
+                                 10.101.3.1            -       100     0       65100 65200 65202 i
+ *  ec    RD: 10.102.1.3:30 ip-prefix 10.3.22.0/24
+                                 10.101.3.2            -       100     0       65100 65200 65202 i
+ * >Ec    RD: 10.102.1.4:30 ip-prefix 10.3.22.0/24
+                                 10.101.3.1            -       100     0       65100 65200 65202 i
+ *  ec    RD: 10.102.1.4:30 ip-prefix 10.3.22.0/24
+                                 10.101.3.2            -       100     0       65100 65200 65202 i
+marpla-dc-1-priv-l03#sh bgp evpn domain remote 
+BGP routing table information for VRF default
+Router identifier 10.101.1.3, local AS number 65102
+Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
+                    c - Contributing to ECMP, % - Pending best path selection
+Origin codes: i - IGP, e - EGP, ? - incomplete
+AS Path Attributes: Or-ID - Originator ID, C-LST - Cluster List, LL Nexthop - Link Local Nexthop
+
+          Network                Next Hop              Metric  LocPref Weight  Path
+marpla-dc-1-priv-l03#
