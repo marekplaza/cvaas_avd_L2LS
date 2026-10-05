@@ -228,6 +228,15 @@ route_maps:
     type: permit
     match:
     - ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY
+- name: RM-UNDERLAY-TO-LEAFS
+  sequence_numbers:
+  - sequence: 10
+    type: deny
+    description: remote DC gateway loopbacks stay on the gateways
+    match:
+    - ip address prefix-list PL-DCI-IN
+  - sequence: 20
+    type: permit
 router_bfd:
   multihop:
     interval: 300
@@ -249,6 +258,7 @@ router_bgp:
       type: ipv4
     send_community: all
     maximum_routes: 256000
+    route_map_out: RM-UNDERLAY-TO-LEAFS
   - name: EVPN-OVERLAY-PEERS
     metadata:
       type: evpn

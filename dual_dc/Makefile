@@ -18,8 +18,9 @@ inspect: ## Inspect the dual-DC lab
 	@sudo containerlab inspect --topo $(TOPO)
 
 .PHONY: build
-build: ## Generate AVD configs for DC1 and DC2
+build: ## Generate AVD configs for DC1 and DC2 and the DCI test catalog
 	cd $(CURRENT_DIR)/avd; ansible-playbook playbooks/avd_build.yml
+	cd $(CURRENT_DIR)/avd; python3 gen_dci_catalog.py
 
 .PHONY: deploy
 deploy: ## Deploy AVD configs using eAPI
@@ -37,9 +38,15 @@ diff: ## Show the diff between running config and designed config
 	cd $(CURRENT_DIR)/avd; ansible-playbook --diff --check playbooks/avd_deploy.yml
 
 .PHONY: test
-test: ## Validate the network state with ANTA
+test: ## fw_test (generates traffic for type-2 checks) + ANTA: AVD catalogs and BGP/EVPN/DCI tests
+	-$(CURRENT_DIR)/fw_test.sh
 	cd $(CURRENT_DIR)/avd; ansible-playbook playbooks/avd_validate.yml
 
+.PHONY: test_dci
+test_dci: ## fw_test + only the BGP/EVPN/DCI tests (avd/anta_catalogs/dci_tests.yml)
+	-$(CURRENT_DIR)/fw_test.sh
+	cd $(CURRENT_DIR)/avd; ansible-playbook playbooks/avd_validate.yml -e avd_catalogs_enabled=false
+
 .PHONY: fw_test
-fw_test: ## Ping anycast GWs and the remote FW node across the DCI from both FW nodes
-	@for fw in marpla-dc-1-fw01 marpla-dc-2-fw01; do echo "== $$fw"; docker exec $$fw Cli -p 15 -c "test"; done
+fw_test: ## Data-plane test from both FW nodes: anycast GWs, stretched VLANs and HA VLAN across DCI
+	$(CURRENT_DIR)/fw_test.sh

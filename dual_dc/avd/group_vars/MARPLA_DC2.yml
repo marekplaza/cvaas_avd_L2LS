@@ -18,6 +18,23 @@ spine:
     # Gateways only carry the VNIs selected for DCI
     filter:
       tags: [dci]
+    # Keep the other DC's gateway loopbacks (learned over DCI) on the gateways:
+    # leafs only ever need to reach their local gateways.
+    structured_config:
+      router_bgp:
+        peer_groups:
+          - name: IPv4-UNDERLAY-PEERS
+            route_map_out: RM-UNDERLAY-TO-LEAFS
+      route_maps:
+        - name: RM-UNDERLAY-TO-LEAFS
+          sequence_numbers:
+            - sequence: 10
+              type: deny
+              description: remote DC gateway loopbacks stay on the gateways
+              match:
+                - ip address prefix-list PL-DCI-IN
+            - sequence: 20
+              type: permit
     evpn_gateway:
       remote_peers:
         - hostname: marpla-dc-1-s01

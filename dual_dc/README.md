@@ -15,6 +15,7 @@ Do każdej pary leafów w obu ośrodkach podłączony jest węzeł geo-rozciągn
 | DCI overlay | eBGP EVPN multihop między bramami (`EVPN-OVERLAY-CORE`, `domain remote`) |
 | Bramy EVPN | spine'y są VTEP-ami i bramami multi-domain (`evpn_gateway`, L2 + L3 inter-domain); dwie bramy ośrodka działają jako all-active multihoming (I-ESI) z D-path |
 | Izolacja | leafy tunelują VXLAN tylko do bram własnego ośrodka; brama ponownie ogłasza trasy z drugiego DC jako swoje (next-hop-self) |
+| Filtr w stronę leafów | `RM-UNDERLAY-TO-LEAFS` (out na `IPv4-UNDERLAY-PEERS` spine'ów) nie przepuszcza loopbacków bram drugiego DC – zostają na bramach |
 | VNI przez DCI | tylko VLAN-y z tagiem `dci` (konfigurowane na bramach): 110, 210, 310, 399 |
 | Anycast gateway | ten sam IP i MAC (`00:1c:73:00:dc:99`) w obu ośrodkach |
 
@@ -60,11 +61,34 @@ cd dual_dc
 make start        # containerlab (18 x cEOS 4.35.6M, sieć mgmt 10.30.0.0/16)
 make build        # AVD: dwa niezależne fabrici (MARPLA_DC1, MARPLA_DC2)
 make deploy_cvp   # wdrożenie przez CVaaS (albo: make deploy - eAPI)
-make fw_test      # z obu węzłów FW: ping anycast GW i drugiego węzła przez DCI
+make test         # fw_test + ANTA: katalogi AVD i testy BGP/EVPN/DCI
+make test_dci     # fw_test + tylko testy BGP/EVPN/DCI
+make fw_test      # tylko test płaszczyzny danych z węzłów FW
 make stop
 ```
 
 Tokeny CVaaS są współdzielone z labem jednego DC (`../clab/cv-onboarding-token`, `../clab/cv-api-token`).
+
+## Testy
+
+`make build` generuje też `avd/anta_catalogs/dci_tests.yml` (skrypt `avd/gen_dci_catalog.py`) –
+oczekiwane wartości są brane z wygenerowanych przez AVD `structured_configs`, więc testy nadążają za zmianami.
+
+| Urządzenia | Test ANTA | Co sprawdza |
+|---|---|---|
+| wszystkie | `VerifyBGPPeerSession`, `VerifyBGPPeerCount` | wszystkie sesje BGP Established; liczba peerów EVPN i IPv4 |
+| wszystkie | `VerifyVxlanVniBinding` | dokładnie te VNI, które powinny być (na bramach tylko VNI przez DCI) |
+| bramy | `VerifyBgpRouteMaps` | route-mapy DCI (in/out) i `RM-UNDERLAY-TO-LEAFS` w stronę leafów |
+| bramy | `VerifyBGPExchangedRoutes` | przez DCI ogłaszane/odbierane są loopbacki bram (Lo0 + VTEP) |
+| bramy | `VerifyVxlanVtep` | VTEP-y = lokalne pary leafów + bramy drugiego DC (nic więcej) |
+| leafy | `VerifyVxlanVtep` | VTEP-y = **tylko** bramy własnego DC – brak tuneli do leafów drugiego DC |
+| bramy, leafy | `VerifyEVPNType5Routes` | podsieci lokalne drugiego DC docierają jako type-5 przez bramy |
+| bramy, leafy | `VerifyEVPNType2Route` | MAC/IP węzła FW z drugiego DC w rozciągniętym VLAN-ie (wymaga ruchu – dlatego `make test` najpierw uruchamia `fw_test`) |
+
+`make fw_test` (`fw_test.sh`) z każdego węzła FW, w każdej strefie: ping anycast GW (VLAN rozciągnięty
+i lokalny), ping drugiego węzła FW przez DCI oraz ping po VLAN-ie HA 399. Wynik PASS/FAIL per cel.
+
+Raporty ANTA: `avd/anta/reports/` (poza repo).
 
 ## Pliki
 
@@ -76,6 +100,8 @@ Tokeny CVaaS są współdzielone z labem jednego DC (`../clab/cv-onboarding-toke
 | `avd/group_vars/MARPLA_NETWORK_SERVICES.yml` | tenanty/VRF-y/VLAN-y stref |
 | `avd/group_vars/MARPLA_CONNECTED_ENDPOINTS.yml` | podłączenie węzłów firewall |
 | `avd/group_vars/ZONE_*.yml` | tag `dmz:<strefa>` |
+| `avd/gen_dci_catalog.py`, `avd/anta_catalogs/` | generator i katalog testów BGP/EVPN/DCI |
+| `fw_test.sh` | test płaszczyzny danych z węzłów FW |
 | `clab/` | topologia, init-configi, numery seryjne `CAFECAFECAFE{dc}1xx` |
 
 Węzły firewall to cEOS bez routingu, z SVI w każdej strefie (`.11` w DC1, `.12` w DC2). Nie emulują

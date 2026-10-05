@@ -660,6 +660,7 @@ router bgp 65200
    neighbor EVPN-OVERLAY-PEERS send-community
    neighbor EVPN-OVERLAY-PEERS maximum-routes 0
    neighbor IPv4-UNDERLAY-PEERS peer group
+   neighbor IPv4-UNDERLAY-PEERS route-map RM-UNDERLAY-TO-LEAFS out
    neighbor IPv4-UNDERLAY-PEERS send-community
    neighbor IPv4-UNDERLAY-PEERS maximum-routes 256000
    neighbor 10.100.0.2 remote-as 65100
@@ -896,6 +897,13 @@ ip prefix-list PL-LOOPBACKS-EVPN-OVERLAY
 | -------- | ---- | ----- | --- | ------------- | -------- |
 | 10 | permit | ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY | - | - | - |
 
+##### RM-UNDERLAY-TO-LEAFS
+
+| Sequence | Type | Match | Set | Sub-Route-Map | Continue |
+| -------- | ---- | ----- | --- | ------------- | -------- |
+| 10 | deny | ip address prefix-list PL-DCI-IN | - | - | - |
+| 20 | permit | - | - | - | - |
+
 #### Route-maps Device Configuration
 
 ```eos
@@ -918,6 +926,12 @@ route-map RM-BGP-10.100.0.4-OUT deny 20
 !
 route-map RM-CONN-2-BGP permit 10
    match ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY
+!
+route-map RM-UNDERLAY-TO-LEAFS deny 10
+   description remote DC gateway loopbacks stay on the gateways
+   match ip address prefix-list PL-DCI-IN
+!
+route-map RM-UNDERLAY-TO-LEAFS permit 20
 ```
 
 ## VRF Instances

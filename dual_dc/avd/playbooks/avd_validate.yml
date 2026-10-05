@@ -3,6 +3,10 @@
   hosts: MARPLA_DCS
   connection: local
   gather_facts: false
+  vars:
+    # AVD-generated catalogs + the dual-DC BGP/EVPN/DCI tests (gen_dci_catalog.py)
+    user_catalogs_enabled: true
+    user_catalogs_dir: "{{ inventory_dir }}/anta_catalogs"
   tasks:
 
     - name: Run ANTA on EOS devices
