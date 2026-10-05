@@ -1,0 +1,158 @@
+---
+# DC1 - own underlay (eBGP, AS 651xx) and own overlay (eBGP EVPN).
+# Spines are EVPN gateways (domain remote) towards DC2.
+fabric_name: MARPLA_DC1
+dc_name: marpla-DC1
+pod_name: marpla-DC1-POD1
+
+spine:
+  defaults:
+    platform: cEOS
+    # Gateways are standalone (all-active multihoming does not support MLAG)
+    mlag: false
+    bgp_as: 65100
+    loopback_ipv4_pool: 10.101.0.0/24
+    vtep_loopback_ipv4_pool: 10.101.3.0/24
+    # Same anycast gateway MAC in both DCs
+    virtual_router_mac_address: 00:1c:73:00:dc:99
+    # Gateways only carry the VNIs selected for DCI
+    filter:
+      tags: [dci]
+    evpn_gateway:
+      remote_peers:
+        - hostname: marpla-dc-2-s01
+          ip_address: 10.102.0.1
+          bgp_as: "65200"
+        - hostname: marpla-dc-2-s02
+          ip_address: 10.102.0.2
+          bgp_as: "65200"
+      evpn_l2:
+        enabled: true
+      evpn_l3:
+        enabled: true
+        inter_domain: true
+      d_path:
+        local_domain_id: "65100:1"
+        remote_domain_id: "65200:2"
+      # Both DC1 gateways act as one all-active (I-ESI) multihomed gateway
+      all_active_multihoming:
+        enabled: true
+        evpn_ethernet_segment:
+          identifier: "0000:0000:0001:0001:0001"
+          rt_import: "00:00:00:01:00:01"
+  nodes:
+    - name: marpla-dc-1-s01
+      id: 1
+      mgmt_ip: 10.30.11.1/16
+      l3_interfaces:
+        - name: Ethernet7
+          description: DCI_marpla-dc-2-s01_Ethernet7
+          peer: marpla-dc-2-s01
+          peer_interface: Ethernet7
+          ip_address: 10.100.0.0/31
+          peer_ip: 10.100.0.1
+          bgp: &dci_bgp
+            peer_as: "65200"
+            ipv4_prefix_list_in: PL-DCI-IN
+            ipv4_prefix_list_out: PL-DCI-OUT
+          structured_config: &dci_mtu
+            mtu: 9214
+        - name: Ethernet8
+          description: DCI_marpla-dc-2-s02_Ethernet8
+          peer: marpla-dc-2-s02
+          peer_interface: Ethernet8
+          ip_address: 10.100.0.2/31
+          peer_ip: 10.100.0.3
+          bgp: *dci_bgp
+          structured_config: *dci_mtu
+    - name: marpla-dc-1-s02
+      id: 2
+      mgmt_ip: 10.30.11.2/16
+      l3_interfaces:
+        - name: Ethernet7
+          description: DCI_marpla-dc-2-s02_Ethernet7
+          peer: marpla-dc-2-s02
+          peer_interface: Ethernet7
+          ip_address: 10.100.0.4/31
+          peer_ip: 10.100.0.5
+          bgp: *dci_bgp
+          structured_config: *dci_mtu
+        - name: Ethernet8
+          description: DCI_marpla-dc-2-s01_Ethernet8
+          peer: marpla-dc-2-s01
+          peer_interface: Ethernet8
+          ip_address: 10.100.0.6/31
+          peer_ip: 10.100.0.7
+          bgp: *dci_bgp
+          structured_config: *dci_mtu
+
+# Underlay over DCI carries only the gateways' loopbacks (router-id + VTEP)
+ipv4_prefix_list_catalog:
+  - name: PL-DCI-OUT
+    sequence_numbers:
+      - sequence: 10
+        action: permit 10.101.0.0/24 eq 32
+      - sequence: 20
+        action: permit 10.101.3.0/24 eq 32
+  - name: PL-DCI-IN
+    sequence_numbers:
+      - sequence: 10
+        action: permit 10.102.0.0/24 eq 32
+      - sequence: 20
+        action: permit 10.102.3.0/24 eq 32
+
+l3leaf:
+  defaults:
+    platform: cEOS
+    loopback_ipv4_pool: 10.101.1.0/24
+    vtep_loopback_ipv4_pool: 10.101.2.0/24
+    uplink_interfaces: [Ethernet1, Ethernet2]
+    uplink_switches: [marpla-dc-1-s01, marpla-dc-1-s02]
+    uplink_ipv4_pool: 10.101.10.0/24
+    mlag_interfaces: [Ethernet3, Ethernet4]
+    mlag_peer_ipv4_pool: 10.101.20.0/24
+    mlag_peer_l3_ipv4_pool: 10.101.21.0/24
+    # Same anycast gateway MAC in both DCs
+    virtual_router_mac_address: 00:1c:73:00:dc:99
+    spanning_tree_mode: mstp
+    spanning_tree_priority: 16384
+  node_groups:
+    - group: dc1-wew
+      bgp_as: 65101
+      filter:
+        tags: [wew, dc1-wew]
+      nodes:
+        - name: marpla-dc-1-wew-l01
+          id: 1
+          mgmt_ip: 10.30.12.1/16
+          uplink_switch_interfaces: [Ethernet1, Ethernet1]
+        - name: marpla-dc-1-wew-l02
+          id: 2
+          mgmt_ip: 10.30.12.2/16
+          uplink_switch_interfaces: [Ethernet2, Ethernet2]
+    - group: dc1-priv
+      bgp_as: 65102
+      filter:
+        tags: [priv, dc1-priv]
+      nodes:
+        - name: marpla-dc-1-priv-l03
+          id: 3
+          mgmt_ip: 10.30.12.3/16
+          uplink_switch_interfaces: [Ethernet3, Ethernet3]
+        - name: marpla-dc-1-priv-l04
+          id: 4
+          mgmt_ip: 10.30.12.4/16
+          uplink_switch_interfaces: [Ethernet4, Ethernet4]
+    - group: dc1-ext
+      bgp_as: 65103
+      filter:
+        tags: [ext, dc1-ext]
+      nodes:
+        - name: marpla-dc-1-ext-l05
+          id: 5
+          mgmt_ip: 10.30.12.5/16
+          uplink_switch_interfaces: [Ethernet5, Ethernet5]
+        - name: marpla-dc-1-ext-l06
+          id: 6
+          mgmt_ip: 10.30.12.6/16
+          uplink_switch_interfaces: [Ethernet6, Ethernet6]

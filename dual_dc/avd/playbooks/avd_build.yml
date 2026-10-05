@@ -1,0 +1,27 @@
+---
+# Each DC is its own AVD fabric (own underlay/overlay), so it is built in its own play.
+- name: Build Configs DC1
+  hosts: MARPLA_DC1
+  gather_facts: false
+  tasks:
+
+    - name: Generate AVD Structured Configurations and Fabric Documentation
+      import_role:
+        name: arista.avd.eos_designs
+
+    - name: Generate Device Configurations and Documentation
+      import_role:
+        name: arista.avd.eos_cli_config_gen
+
+- name: Build Configs DC2
+  hosts: MARPLA_DC2
+  gather_facts: false
+  tasks:
+
+    - name: Generate AVD Structured Configurations and Fabric Documentation
+      import_role:
+        name: arista.avd.eos_designs
+
+    - name: Generate Device Configurations and Documentation
+      import_role:
+        name: arista.avd.eos_cli_config_gen

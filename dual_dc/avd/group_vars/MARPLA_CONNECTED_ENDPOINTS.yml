@@ -1,0 +1,57 @@
+---
+# Geo-stretched active/passive firewall cluster: one node per DC, each node
+# dual-homed (LACP to the MLAG pair) to every zone leaf pair of its DC.
+servers:
+  - name: marpla-dc-1-fw01
+    adapters:
+      - switches: [marpla-dc-1-wew-l01, marpla-dc-1-wew-l02]
+        switch_ports: [Ethernet5, Ethernet5]
+        endpoint_ports: [Ethernet1, Ethernet2]
+        mode: trunk
+        vlans: "210,221"
+        port_channel:
+          mode: active
+          description: FW_WEW
+      - switches: [marpla-dc-1-priv-l03, marpla-dc-1-priv-l04]
+        switch_ports: [Ethernet5, Ethernet5]
+        endpoint_ports: [Ethernet3, Ethernet4]
+        mode: trunk
+        vlans: "310,321,399"
+        port_channel:
+          mode: active
+          description: FW_PRIV
+      - switches: [marpla-dc-1-ext-l05, marpla-dc-1-ext-l06]
+        switch_ports: [Ethernet5, Ethernet5]
+        endpoint_ports: [Ethernet5, Ethernet6]
+        mode: trunk
+        vlans: "110,121"
+        port_channel:
+          mode: active
+          description: FW_EXT
+
+  - name: marpla-dc-2-fw01
+    adapters:
+      - switches: [marpla-dc-2-wew-l01, marpla-dc-2-wew-l02]
+        switch_ports: [Ethernet5, Ethernet5]
+        endpoint_ports: [Ethernet1, Ethernet2]
+        mode: trunk
+        vlans: "210,222"
+        port_channel:
+          mode: active
+          description: FW_WEW
+      - switches: [marpla-dc-2-priv-l03, marpla-dc-2-priv-l04]
+        switch_ports: [Ethernet5, Ethernet5]
+        endpoint_ports: [Ethernet3, Ethernet4]
+        mode: trunk
+        vlans: "310,322,399"
+        port_channel:
+          mode: active
+          description: FW_PRIV
+      - switches: [marpla-dc-2-ext-l05, marpla-dc-2-ext-l06]
+        switch_ports: [Ethernet5, Ethernet5]
+        endpoint_ports: [Ethernet5, Ethernet6]
+        mode: trunk
+        vlans: "110,122"
+        port_channel:
+          mode: active
+          description: FW_EXT

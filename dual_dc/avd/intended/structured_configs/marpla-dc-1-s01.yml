@@ -1,0 +1,614 @@
+aaa_root:
+  disabled: true
+config_end: true
+daemon_terminattr:
+  cvaddrs:
+  - apiserver.cv-prod-euwest-2.arista.io:443
+  cvauth:
+    method: token-secure
+    token_file: /mnt/flash/cv-onboarding-token
+  cvvrf: MGMT
+  disable_aaa: true
+  ingestexclude: /Sysdb/cell/1/agent,/Sysdb/cell/2/agent
+  smashexcludes: ale,flexCounter,hardware,kni,pulse,strata
+dns_domain: avd.lab
+enable_password:
+  disabled: true
+ethernet_interfaces:
+- name: Ethernet1
+  description: P2P_marpla-dc-1-wew-l01_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.101.10.0/31
+  metadata:
+    peer: marpla-dc-1-wew-l01
+    peer_interface: Ethernet1
+    peer_type: l3leaf
+  switchport:
+    enabled: false
+- name: Ethernet2
+  description: P2P_marpla-dc-1-wew-l02_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.101.10.4/31
+  metadata:
+    peer: marpla-dc-1-wew-l02
+    peer_interface: Ethernet1
+    peer_type: l3leaf
+  switchport:
+    enabled: false
+- name: Ethernet3
+  description: P2P_marpla-dc-1-priv-l03_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.101.10.8/31
+  metadata:
+    peer: marpla-dc-1-priv-l03
+    peer_interface: Ethernet1
+    peer_type: l3leaf
+  switchport:
+    enabled: false
+- name: Ethernet4
+  description: P2P_marpla-dc-1-priv-l04_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.101.10.12/31
+  metadata:
+    peer: marpla-dc-1-priv-l04
+    peer_interface: Ethernet1
+    peer_type: l3leaf
+  switchport:
+    enabled: false
+- name: Ethernet5
+  description: P2P_marpla-dc-1-ext-l05_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.101.10.16/31
+  metadata:
+    peer: marpla-dc-1-ext-l05
+    peer_interface: Ethernet1
+    peer_type: l3leaf
+  switchport:
+    enabled: false
+- name: Ethernet6
+  description: P2P_marpla-dc-1-ext-l06_Ethernet1
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.101.10.20/31
+  metadata:
+    peer: marpla-dc-1-ext-l06
+    peer_interface: Ethernet1
+    peer_type: l3leaf
+  switchport:
+    enabled: false
+- name: Ethernet7
+  description: DCI_marpla-dc-2-s01_Ethernet7
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.100.0.0/31
+  metadata:
+    peer: marpla-dc-2-s01
+    peer_interface: Ethernet7
+    peer_type: l3_interface
+  switchport:
+    enabled: false
+- name: Ethernet8
+  description: DCI_marpla-dc-2-s02_Ethernet8
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.100.0.2/31
+  metadata:
+    peer: marpla-dc-2-s02
+    peer_interface: Ethernet8
+    peer_type: l3_interface
+  switchport:
+    enabled: false
+hostname: marpla-dc-1-s01
+ip_domain_lookup:
+  source_interfaces:
+  - name: Management1
+    vrf: MGMT
+ip_igmp_snooping:
+  globally_enabled: true
+ip_name_server:
+  vrfs:
+  - name: MGMT
+    servers:
+    - ip_address: 8.8.8.8
+ip_routing: true
+ip_virtual_router_mac_address: 00:1c:73:00:dc:99
+local_users:
+- name: arista
+  privilege: 15
+  role: network-admin
+  sha512_password: $6$GgJDMeBVxpUHjqLw$LUbUYX7pnVUjvcxoaAeGW0llEhfuX9XKiQRRx7oqFTuHUEYeFxQmDwhT.XcQvAiJsOG7YtAoTGuV7nRTBxF6r1
+loopback_interfaces:
+- name: Loopback0
+  description: ROUTER_ID
+  shutdown: false
+  ip_address: 10.101.0.1/32
+- name: Loopback1
+  description: VXLAN_TUNNEL_SOURCE
+  shutdown: false
+  ip_address: 10.101.3.1/32
+management_api_http:
+  enable_http: false
+  enable_https: true
+  enable_vrfs:
+  - name: MGMT
+management_interfaces:
+- name: Management1
+  description: OOB_MANAGEMENT
+  shutdown: false
+  vrf: MGMT
+  ip_address: 10.30.11.1/16
+  type: oob
+  gateway: 10.30.0.1
+metadata:
+  is_deployed: true
+  platform: cEOS
+  pod_name: marpla-DC1-POD1
+  dc_name: marpla-DC1
+  fabric_name: MARPLA_DC1
+  validate_hardware:
+    enabled: false
+  cv_tags:
+    device_tags:
+    - name: topology_hint_datacenter
+      value: marpla-DC1
+    - name: topology_hint_fabric
+      value: MARPLA_DC1
+    - name: topology_hint_pod
+      value: marpla-DC1-POD1
+    - name: topology_hint_type
+      value: spine
+    - name: owner
+      value: marpla
+ntp:
+  local_interface:
+    name: Management1
+    vrf: MGMT
+  servers:
+  - name: time.google.com
+    preferred: true
+  - name: time.windows.com
+  - name: time.apple.com
+  vrf: MGMT
+prefix_lists:
+- name: PL-DCI-IN
+  sequence_numbers:
+  - sequence: 10
+    action: permit 10.102.0.0/24 eq 32
+  - sequence: 20
+    action: permit 10.102.3.0/24 eq 32
+- name: PL-DCI-OUT
+  sequence_numbers:
+  - sequence: 10
+    action: permit 10.101.0.0/24 eq 32
+  - sequence: 20
+    action: permit 10.101.3.0/24 eq 32
+- name: PL-LOOPBACKS-EVPN-OVERLAY
+  sequence_numbers:
+  - sequence: 10
+    action: permit 10.101.0.0/24 eq 32
+  - sequence: 20
+    action: permit 10.101.3.0/24 eq 32
+route_maps:
+- name: RM-BGP-10.100.0.1-IN
+  sequence_numbers:
+  - sequence: 10
+    type: permit
+    match:
+    - ip address prefix-list PL-DCI-IN
+- name: RM-BGP-10.100.0.1-OUT
+  sequence_numbers:
+  - sequence: 10
+    type: permit
+    match:
+    - ip address prefix-list PL-DCI-OUT
+  - sequence: 20
+    type: deny
+- name: RM-BGP-10.100.0.3-IN
+  sequence_numbers:
+  - sequence: 10
+    type: permit
+    match:
+    - ip address prefix-list PL-DCI-IN
+- name: RM-BGP-10.100.0.3-OUT
+  sequence_numbers:
+  - sequence: 10
+    type: permit
+    match:
+    - ip address prefix-list PL-DCI-OUT
+  - sequence: 20
+    type: deny
+- name: RM-CONN-2-BGP
+  sequence_numbers:
+  - sequence: 10
+    type: permit
+    match:
+    - ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY
+router_bfd:
+  multihop:
+    interval: 300
+    min_rx: 300
+    multiplier: 3
+router_bgp:
+  as: '65100'
+  router_id: 10.101.0.1
+  maximum_paths:
+    paths: 4
+  bgp:
+    default:
+      ipv4_unicast: false
+    bestpath:
+      d_path: true
+  peer_groups:
+  - name: IPv4-UNDERLAY-PEERS
+    metadata:
+      type: ipv4
+    send_community: all
+    maximum_routes: 256000
+  - name: EVPN-OVERLAY-PEERS
+    metadata:
+      type: evpn
+    next_hop_unchanged: true
+    update_source: Loopback0
+    bfd: true
+    ebgp_multihop: 3
+    send_community: all
+    maximum_routes: 0
+  - name: EVPN-OVERLAY-CORE
+    metadata:
+      type: evpn
+    update_source: Loopback0
+    bfd: true
+    ebgp_multihop: 15
+    send_community: all
+    maximum_routes: 0
+  neighbors:
+  - ip_address: 10.100.0.1
+    remote_as: '65200'
+    description: DCI_marpla-dc-2-s01_Ethernet7
+    route_map_in: RM-BGP-10.100.0.1-IN
+    route_map_out: RM-BGP-10.100.0.1-OUT
+  - ip_address: 10.100.0.3
+    remote_as: '65200'
+    description: DCI_marpla-dc-2-s02_Ethernet8
+    route_map_in: RM-BGP-10.100.0.3-IN
+    route_map_out: RM-BGP-10.100.0.3-OUT
+  - ip_address: 10.101.10.1
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65101'
+    metadata:
+      peer: marpla-dc-1-wew-l01
+    description: marpla-dc-1-wew-l01_Ethernet1
+  - ip_address: 10.101.10.5
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65101'
+    metadata:
+      peer: marpla-dc-1-wew-l02
+    description: marpla-dc-1-wew-l02_Ethernet1
+  - ip_address: 10.101.10.9
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65102'
+    metadata:
+      peer: marpla-dc-1-priv-l03
+    description: marpla-dc-1-priv-l03_Ethernet1
+  - ip_address: 10.101.10.13
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65102'
+    metadata:
+      peer: marpla-dc-1-priv-l04
+    description: marpla-dc-1-priv-l04_Ethernet1
+  - ip_address: 10.101.10.17
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65103'
+    metadata:
+      peer: marpla-dc-1-ext-l05
+    description: marpla-dc-1-ext-l05_Ethernet1
+  - ip_address: 10.101.10.21
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65103'
+    metadata:
+      peer: marpla-dc-1-ext-l06
+    description: marpla-dc-1-ext-l06_Ethernet1
+  - ip_address: 10.101.1.5
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65103'
+    metadata:
+      peer: marpla-dc-1-ext-l05
+    description: marpla-dc-1-ext-l05_Loopback0
+  - ip_address: 10.101.1.6
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65103'
+    metadata:
+      peer: marpla-dc-1-ext-l06
+    description: marpla-dc-1-ext-l06_Loopback0
+  - ip_address: 10.101.1.3
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65102'
+    metadata:
+      peer: marpla-dc-1-priv-l03
+    description: marpla-dc-1-priv-l03_Loopback0
+  - ip_address: 10.101.1.4
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65102'
+    metadata:
+      peer: marpla-dc-1-priv-l04
+    description: marpla-dc-1-priv-l04_Loopback0
+  - ip_address: 10.101.1.1
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65101'
+    metadata:
+      peer: marpla-dc-1-wew-l01
+    description: marpla-dc-1-wew-l01_Loopback0
+  - ip_address: 10.101.1.2
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65101'
+    metadata:
+      peer: marpla-dc-1-wew-l02
+    description: marpla-dc-1-wew-l02_Loopback0
+  - ip_address: 10.102.0.1
+    peer_group: EVPN-OVERLAY-CORE
+    remote_as: '65200'
+    metadata:
+      peer: marpla-dc-2-s01
+    description: marpla-dc-2-s01
+  - ip_address: 10.102.0.2
+    peer_group: EVPN-OVERLAY-CORE
+    remote_as: '65200'
+    metadata:
+      peer: marpla-dc-2-s02
+    description: marpla-dc-2-s02
+  redistribute:
+    connected:
+      enabled: true
+      route_map: RM-CONN-2-BGP
+  vlans:
+  - id: 110
+    metadata:
+      tenants:
+      - EXT
+    rd: 10.101.0.1:110
+    rd_evpn_domain:
+      domain: remote
+      rd: 10.101.0.1:110
+    route_targets:
+      both:
+      - 110:110
+      import_export_evpn_domains:
+      - domain: remote
+        route_target: 110:110
+    redistribute_routes:
+    - learned
+  - id: 310
+    metadata:
+      tenants:
+      - PRIV
+    rd: 10.101.0.1:310
+    rd_evpn_domain:
+      domain: remote
+      rd: 10.101.0.1:310
+    route_targets:
+      both:
+      - 310:310
+      import_export_evpn_domains:
+      - domain: remote
+        route_target: 310:310
+    redistribute_routes:
+    - learned
+  - id: 399
+    metadata:
+      tenants:
+      - PRIV
+    rd: 10.101.0.1:399
+    rd_evpn_domain:
+      domain: remote
+      rd: 10.101.0.1:399
+    route_targets:
+      both:
+      - 399:399
+      import_export_evpn_domains:
+      - domain: remote
+        route_target: 399:399
+    redistribute_routes:
+    - learned
+  - id: 210
+    metadata:
+      tenants:
+      - WEW
+    rd: 10.101.0.1:210
+    rd_evpn_domain:
+      domain: remote
+      rd: 10.101.0.1:210
+    route_targets:
+      both:
+      - 210:210
+      import_export_evpn_domains:
+      - domain: remote
+        route_target: 210:210
+    redistribute_routes:
+    - learned
+  address_family_evpn:
+    domain_identifier: '65100:1'
+    domain_identifier_remote: '65200:2'
+    neighbor_default:
+      next_hop_self_received_evpn_routes:
+        enable: true
+        inter_domain: true
+    peer_groups:
+    - name: EVPN-OVERLAY-PEERS
+      activate: true
+    - name: EVPN-OVERLAY-CORE
+      activate: true
+      domain_remote: true
+    evpn_ethernet_segment:
+    - domain: all
+      identifier: 0000:0000:0001:0001:0001
+      route_target_import: 00:00:00:01:00:01
+  address_family_ipv4:
+    peer_groups:
+    - name: IPv4-UNDERLAY-PEERS
+      activate: true
+    - name: EVPN-OVERLAY-PEERS
+      activate: false
+    - name: EVPN-OVERLAY-CORE
+      activate: false
+    neighbors:
+    - ip_address: 10.100.0.1
+      activate: true
+    - ip_address: 10.100.0.3
+      activate: true
+  vrfs:
+  - name: EXT
+    rd: 10.101.0.1:10
+    route_targets:
+      import:
+      - address_family: evpn
+        route_targets:
+        - '10:10'
+      export:
+      - address_family: evpn
+        route_targets:
+        - '10:10'
+    router_id: 10.101.0.1
+    redistribute:
+      connected:
+        enabled: true
+  - name: PRIV
+    rd: 10.101.0.1:30
+    route_targets:
+      import:
+      - address_family: evpn
+        route_targets:
+        - '30:30'
+      export:
+      - address_family: evpn
+        route_targets:
+        - '30:30'
+    router_id: 10.101.0.1
+    redistribute:
+      connected:
+        enabled: true
+  - name: WEW
+    rd: 10.101.0.1:20
+    route_targets:
+      import:
+      - address_family: evpn
+        route_targets:
+        - '20:20'
+      export:
+      - address_family: evpn
+        route_targets:
+        - '20:20'
+    router_id: 10.101.0.1
+    redistribute:
+      connected:
+        enabled: true
+service_routing_protocols_model: multi-agent
+static_routes:
+- vrf: MGMT
+  prefix: 0.0.0.0/0
+  next_hop: 10.30.0.1
+transceiver_qsfp_default_mode_4x10: true
+vlan_interfaces:
+- name: Vlan110
+  description: EXT_FW
+  shutdown: false
+  vrf: EXT
+  ip_address_virtual: 10.1.10.1/24
+  metadata:
+    tenants:
+    - EXT
+    tags:
+    - ext
+    - dci
+- name: Vlan310
+  description: PRIV_FW
+  shutdown: false
+  vrf: PRIV
+  ip_address_virtual: 10.3.10.1/24
+  metadata:
+    tenants:
+    - PRIV
+    tags:
+    - priv
+    - dci
+- name: Vlan210
+  description: WEW_FW
+  shutdown: false
+  vrf: WEW
+  ip_address_virtual: 10.2.10.1/24
+  metadata:
+    tenants:
+    - WEW
+    tags:
+    - wew
+    - dci
+vlan_internal_order:
+  allocation: ascending
+  range:
+    beginning: 1006
+    ending: 1199
+vlans:
+- id: 110
+  name: EXT_FW
+  metadata:
+    tenants:
+    - EXT
+- id: 310
+  name: PRIV_FW
+  metadata:
+    tenants:
+    - PRIV
+- id: 399
+  name: FW_HA
+  metadata:
+    tenants:
+    - PRIV
+- id: 210
+  name: WEW_FW
+  metadata:
+    tenants:
+    - WEW
+vrfs:
+- name: MGMT
+  ip_routing: false
+- name: EXT
+  ip_routing: true
+  metadata:
+    tenants:
+    - EXT
+- name: PRIV
+  ip_routing: true
+  metadata:
+    tenants:
+    - PRIV
+- name: WEW
+  ip_routing: true
+  metadata:
+    tenants:
+    - WEW
+vxlan_interface:
+  vxlan1:
+    description: marpla-dc-1-s01_VTEP
+    vxlan:
+      source_interface: Loopback1
+      udp_port: 4789
+      vlans:
+      - id: 110
+        vni: 1000110
+      - id: 310
+        vni: 3000310
+      - id: 399
+        vni: 3000399
+      - id: 210
+        vni: 2000210
+      vrfs:
+      - name: EXT
+        vni: 1009000
+      - name: PRIV
+        vni: 3009000
+      - name: WEW
+        vni: 2009000

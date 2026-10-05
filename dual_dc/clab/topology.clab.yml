@@ -1,0 +1,167 @@
+---
+name: marpla-dual-dc
+prefix: ""
+
+mgmt:
+    network: marpla_dualdc_mgmt
+    ipv4-subnet: 10.30.0.0/16
+
+topology:
+    kinds:
+        ceos:
+            enforce-startup-config: true
+            image: arista/ceos:4.35.6M
+            binds:
+            - interface_mapping.json:/mnt/flash/EosIntfMapping.json:ro
+            # same CVaaS onboarding token as the single-DC lab
+            - ../../clab/cv-onboarding-token:/mnt/flash/cv-onboarding-token:ro
+    defaults:
+        kind: ceos
+    nodes:
+        marpla-dc-1-s01:
+            mgmt-ipv4: 10.30.11.1
+            binds:
+            - sn/marpla-dc-1-s01.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-1-s01.cfg
+        marpla-dc-1-s02:
+            mgmt-ipv4: 10.30.11.2
+            binds:
+            - sn/marpla-dc-1-s02.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-1-s02.cfg
+        marpla-dc-1-wew-l01:
+            mgmt-ipv4: 10.30.12.1
+            binds:
+            - sn/marpla-dc-1-wew-l01.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-1-wew-l01.cfg
+        marpla-dc-1-wew-l02:
+            mgmt-ipv4: 10.30.12.2
+            binds:
+            - sn/marpla-dc-1-wew-l02.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-1-wew-l02.cfg
+        marpla-dc-1-priv-l03:
+            mgmt-ipv4: 10.30.12.3
+            binds:
+            - sn/marpla-dc-1-priv-l03.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-1-priv-l03.cfg
+        marpla-dc-1-priv-l04:
+            mgmt-ipv4: 10.30.12.4
+            binds:
+            - sn/marpla-dc-1-priv-l04.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-1-priv-l04.cfg
+        marpla-dc-1-ext-l05:
+            mgmt-ipv4: 10.30.12.5
+            binds:
+            - sn/marpla-dc-1-ext-l05.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-1-ext-l05.cfg
+        marpla-dc-1-ext-l06:
+            mgmt-ipv4: 10.30.12.6
+            binds:
+            - sn/marpla-dc-1-ext-l06.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-1-ext-l06.cfg
+        marpla-dc-2-s01:
+            mgmt-ipv4: 10.30.21.1
+            binds:
+            - sn/marpla-dc-2-s01.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-2-s01.cfg
+        marpla-dc-2-s02:
+            mgmt-ipv4: 10.30.21.2
+            binds:
+            - sn/marpla-dc-2-s02.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-2-s02.cfg
+        marpla-dc-2-wew-l01:
+            mgmt-ipv4: 10.30.22.1
+            binds:
+            - sn/marpla-dc-2-wew-l01.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-2-wew-l01.cfg
+        marpla-dc-2-wew-l02:
+            mgmt-ipv4: 10.30.22.2
+            binds:
+            - sn/marpla-dc-2-wew-l02.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-2-wew-l02.cfg
+        marpla-dc-2-priv-l03:
+            mgmt-ipv4: 10.30.22.3
+            binds:
+            - sn/marpla-dc-2-priv-l03.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-2-priv-l03.cfg
+        marpla-dc-2-priv-l04:
+            mgmt-ipv4: 10.30.22.4
+            binds:
+            - sn/marpla-dc-2-priv-l04.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-2-priv-l04.cfg
+        marpla-dc-2-ext-l05:
+            mgmt-ipv4: 10.30.22.5
+            binds:
+            - sn/marpla-dc-2-ext-l05.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-2-ext-l05.cfg
+        marpla-dc-2-ext-l06:
+            mgmt-ipv4: 10.30.22.6
+            binds:
+            - sn/marpla-dc-2-ext-l06.txt:/mnt/flash/ceos-config:ro
+            startup-config: init-configs/marpla-dc-2-ext-l06.cfg
+        marpla-dc-1-fw01:
+            mgmt-ipv4: 10.30.19.1
+            startup-config: init-configs/marpla-dc-1-fw01.cfg
+        marpla-dc-2-fw01:
+            mgmt-ipv4: 10.30.29.1
+            startup-config: init-configs/marpla-dc-2-fw01.cfg
+
+    links:
+    # DC1 leaf uplinks
+    - endpoints: ["marpla-dc-1-wew-l01:eth1", "marpla-dc-1-s01:eth1"]
+    - endpoints: ["marpla-dc-1-wew-l01:eth2", "marpla-dc-1-s02:eth1"]
+    - endpoints: ["marpla-dc-1-wew-l02:eth1", "marpla-dc-1-s01:eth2"]
+    - endpoints: ["marpla-dc-1-wew-l02:eth2", "marpla-dc-1-s02:eth2"]
+    - endpoints: ["marpla-dc-1-priv-l03:eth1", "marpla-dc-1-s01:eth3"]
+    - endpoints: ["marpla-dc-1-priv-l03:eth2", "marpla-dc-1-s02:eth3"]
+    - endpoints: ["marpla-dc-1-priv-l04:eth1", "marpla-dc-1-s01:eth4"]
+    - endpoints: ["marpla-dc-1-priv-l04:eth2", "marpla-dc-1-s02:eth4"]
+    - endpoints: ["marpla-dc-1-ext-l05:eth1", "marpla-dc-1-s01:eth5"]
+    - endpoints: ["marpla-dc-1-ext-l05:eth2", "marpla-dc-1-s02:eth5"]
+    - endpoints: ["marpla-dc-1-ext-l06:eth1", "marpla-dc-1-s01:eth6"]
+    - endpoints: ["marpla-dc-1-ext-l06:eth2", "marpla-dc-1-s02:eth6"]
+    # DC1 MLAG peer-links
+    - endpoints: ["marpla-dc-1-wew-l01:eth3", "marpla-dc-1-wew-l02:eth3"]
+    - endpoints: ["marpla-dc-1-wew-l01:eth4", "marpla-dc-1-wew-l02:eth4"]
+    - endpoints: ["marpla-dc-1-priv-l03:eth3", "marpla-dc-1-priv-l04:eth3"]
+    - endpoints: ["marpla-dc-1-priv-l03:eth4", "marpla-dc-1-priv-l04:eth4"]
+    - endpoints: ["marpla-dc-1-ext-l05:eth3", "marpla-dc-1-ext-l06:eth3"]
+    - endpoints: ["marpla-dc-1-ext-l05:eth4", "marpla-dc-1-ext-l06:eth4"]
+    # DC1 firewall node -> every zone leaf pair
+    - endpoints: ["marpla-dc-1-fw01:eth1", "marpla-dc-1-wew-l01:eth5"]
+    - endpoints: ["marpla-dc-1-fw01:eth2", "marpla-dc-1-wew-l02:eth5"]
+    - endpoints: ["marpla-dc-1-fw01:eth3", "marpla-dc-1-priv-l03:eth5"]
+    - endpoints: ["marpla-dc-1-fw01:eth4", "marpla-dc-1-priv-l04:eth5"]
+    - endpoints: ["marpla-dc-1-fw01:eth5", "marpla-dc-1-ext-l05:eth5"]
+    - endpoints: ["marpla-dc-1-fw01:eth6", "marpla-dc-1-ext-l06:eth5"]
+    # DC2 leaf uplinks
+    - endpoints: ["marpla-dc-2-wew-l01:eth1", "marpla-dc-2-s01:eth1"]
+    - endpoints: ["marpla-dc-2-wew-l01:eth2", "marpla-dc-2-s02:eth1"]
+    - endpoints: ["marpla-dc-2-wew-l02:eth1", "marpla-dc-2-s01:eth2"]
+    - endpoints: ["marpla-dc-2-wew-l02:eth2", "marpla-dc-2-s02:eth2"]
+    - endpoints: ["marpla-dc-2-priv-l03:eth1", "marpla-dc-2-s01:eth3"]
+    - endpoints: ["marpla-dc-2-priv-l03:eth2", "marpla-dc-2-s02:eth3"]
+    - endpoints: ["marpla-dc-2-priv-l04:eth1", "marpla-dc-2-s01:eth4"]
+    - endpoints: ["marpla-dc-2-priv-l04:eth2", "marpla-dc-2-s02:eth4"]
+    - endpoints: ["marpla-dc-2-ext-l05:eth1", "marpla-dc-2-s01:eth5"]
+    - endpoints: ["marpla-dc-2-ext-l05:eth2", "marpla-dc-2-s02:eth5"]
+    - endpoints: ["marpla-dc-2-ext-l06:eth1", "marpla-dc-2-s01:eth6"]
+    - endpoints: ["marpla-dc-2-ext-l06:eth2", "marpla-dc-2-s02:eth6"]
+    # DC2 MLAG peer-links
+    - endpoints: ["marpla-dc-2-wew-l01:eth3", "marpla-dc-2-wew-l02:eth3"]
+    - endpoints: ["marpla-dc-2-wew-l01:eth4", "marpla-dc-2-wew-l02:eth4"]
+    - endpoints: ["marpla-dc-2-priv-l03:eth3", "marpla-dc-2-priv-l04:eth3"]
+    - endpoints: ["marpla-dc-2-priv-l03:eth4", "marpla-dc-2-priv-l04:eth4"]
+    - endpoints: ["marpla-dc-2-ext-l05:eth3", "marpla-dc-2-ext-l06:eth3"]
+    - endpoints: ["marpla-dc-2-ext-l05:eth4", "marpla-dc-2-ext-l06:eth4"]
+    # DC2 firewall node -> every zone leaf pair
+    - endpoints: ["marpla-dc-2-fw01:eth1", "marpla-dc-2-wew-l01:eth5"]
+    - endpoints: ["marpla-dc-2-fw01:eth2", "marpla-dc-2-wew-l02:eth5"]
+    - endpoints: ["marpla-dc-2-fw01:eth3", "marpla-dc-2-priv-l03:eth5"]
+    - endpoints: ["marpla-dc-2-fw01:eth4", "marpla-dc-2-priv-l04:eth5"]
+    - endpoints: ["marpla-dc-2-fw01:eth5", "marpla-dc-2-ext-l05:eth5"]
+    - endpoints: ["marpla-dc-2-fw01:eth6", "marpla-dc-2-ext-l06:eth5"]
+    # DCI: 4 links between DC1 and DC2 spines
+    - endpoints: ["marpla-dc-1-s01:eth7", "marpla-dc-2-s01:eth7"]
+    - endpoints: ["marpla-dc-1-s01:eth8", "marpla-dc-2-s02:eth8"]
+    - endpoints: ["marpla-dc-1-s02:eth7", "marpla-dc-2-s02:eth7"]
+    - endpoints: ["marpla-dc-1-s02:eth8", "marpla-dc-2-s01:eth8"]

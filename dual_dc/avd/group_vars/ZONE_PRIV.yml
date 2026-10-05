@@ -1,0 +1,9 @@
+---
+# Security zone "priv" - leaf pairs in DC1 and DC2 get CloudVision tag dmz:priv
+generate_cv_tags:
+  topology_hints: true
+  device_tags:
+    - name: owner
+      value: marpla
+    - name: dmz
+      value: priv

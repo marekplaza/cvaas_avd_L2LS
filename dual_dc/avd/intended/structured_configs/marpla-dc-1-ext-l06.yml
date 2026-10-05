@@ -1,0 +1,443 @@
+aaa_root:
+  disabled: true
+config_end: true
+daemon_terminattr:
+  cvaddrs:
+  - apiserver.cv-prod-euwest-2.arista.io:443
+  cvauth:
+    method: token-secure
+    token_file: /mnt/flash/cv-onboarding-token
+  cvvrf: MGMT
+  disable_aaa: true
+  ingestexclude: /Sysdb/cell/1/agent,/Sysdb/cell/2/agent
+  smashexcludes: ale,flexCounter,hardware,kni,pulse,strata
+dns_domain: avd.lab
+enable_password:
+  disabled: true
+ethernet_interfaces:
+- name: Ethernet3
+  description: MLAG_marpla-dc-1-ext-l05_Ethernet3
+  shutdown: false
+  channel_group:
+    id: 3
+    mode: active
+  metadata:
+    peer: marpla-dc-1-ext-l05
+    peer_interface: Ethernet3
+    peer_type: mlag_peer
+- name: Ethernet4
+  description: MLAG_marpla-dc-1-ext-l05_Ethernet4
+  shutdown: false
+  channel_group:
+    id: 3
+    mode: active
+  metadata:
+    peer: marpla-dc-1-ext-l05
+    peer_interface: Ethernet4
+    peer_type: mlag_peer
+- name: Ethernet1
+  description: P2P_marpla-dc-1-s01_Ethernet6
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.101.10.21/31
+  metadata:
+    peer: marpla-dc-1-s01
+    peer_interface: Ethernet6
+    peer_type: spine
+  switchport:
+    enabled: false
+- name: Ethernet2
+  description: P2P_marpla-dc-1-s02_Ethernet6
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.101.10.23/31
+  metadata:
+    peer: marpla-dc-1-s02
+    peer_interface: Ethernet6
+    peer_type: spine
+  switchport:
+    enabled: false
+- name: Ethernet5
+  description: SERVER_marpla-dc-1-fw01_Ethernet6
+  shutdown: false
+  channel_group:
+    id: 5
+    mode: active
+  metadata:
+    peer: marpla-dc-1-fw01
+    peer_interface: Ethernet6
+    peer_type: server
+    peer_key: servers
+hostname: marpla-dc-1-ext-l06
+ip_domain_lookup:
+  source_interfaces:
+  - name: Management1
+    vrf: MGMT
+ip_igmp_snooping:
+  globally_enabled: true
+ip_name_server:
+  vrfs:
+  - name: MGMT
+    servers:
+    - ip_address: 8.8.8.8
+ip_routing: true
+ip_virtual_router_mac_address: 00:1c:73:00:dc:99
+local_users:
+- name: arista
+  privilege: 15
+  role: network-admin
+  sha512_password: $6$GgJDMeBVxpUHjqLw$LUbUYX7pnVUjvcxoaAeGW0llEhfuX9XKiQRRx7oqFTuHUEYeFxQmDwhT.XcQvAiJsOG7YtAoTGuV7nRTBxF6r1
+loopback_interfaces:
+- name: Loopback0
+  description: ROUTER_ID
+  shutdown: false
+  ip_address: 10.101.1.6/32
+- name: Loopback1
+  description: VXLAN_TUNNEL_SOURCE
+  shutdown: false
+  ip_address: 10.101.2.5/32
+management_api_http:
+  enable_http: false
+  enable_https: true
+  enable_vrfs:
+  - name: MGMT
+management_interfaces:
+- name: Management1
+  description: OOB_MANAGEMENT
+  shutdown: false
+  vrf: MGMT
+  ip_address: 10.30.12.6/16
+  type: oob
+  gateway: 10.30.0.1
+metadata:
+  is_deployed: true
+  platform: cEOS
+  pod_name: marpla-DC1-POD1
+  dc_name: marpla-DC1
+  fabric_name: MARPLA_DC1
+  validate_hardware:
+    enabled: false
+  cv_tags:
+    device_tags:
+    - name: topology_hint_datacenter
+      value: marpla-DC1
+    - name: topology_hint_fabric
+      value: MARPLA_DC1
+    - name: topology_hint_pod
+      value: marpla-DC1-POD1
+    - name: topology_hint_type
+      value: leaf
+    - name: topology_hint_rack
+      value: dc1-ext
+    - name: owner
+      value: marpla
+    - name: dmz
+      value: ext
+mlag_configuration:
+  domain_id: dc1-ext
+  local_interface: Vlan4094
+  peer_address: 10.101.20.8
+  peer_link: Port-Channel3
+  reload_delay_mlag: '300'
+  reload_delay_non_mlag: '330'
+ntp:
+  local_interface:
+    name: Management1
+    vrf: MGMT
+  servers:
+  - name: time.google.com
+    preferred: true
+  - name: time.windows.com
+  - name: time.apple.com
+  vrf: MGMT
+port_channel_interfaces:
+- name: Port-Channel3
+  description: MLAG_marpla-dc-1-ext-l05_Port-Channel3
+  shutdown: false
+  switchport:
+    enabled: true
+    mode: trunk
+    trunk:
+      groups:
+      - MLAG
+- name: Port-Channel5
+  description: FW_EXT
+  shutdown: false
+  mlag: 5
+  switchport:
+    enabled: true
+    mode: trunk
+    trunk:
+      allowed_vlan: 110,121
+prefix_lists:
+- name: PL-LOOPBACKS-EVPN-OVERLAY
+  sequence_numbers:
+  - sequence: 10
+    action: permit 10.101.1.0/24 eq 32
+  - sequence: 20
+    action: permit 10.101.2.0/24 eq 32
+- name: PL-MLAG-PEER-VRFS
+  sequence_numbers:
+  - sequence: 10
+    action: permit 10.101.21.8/31
+route_maps:
+- name: RM-MLAG-PEER-IN
+  sequence_numbers:
+  - sequence: 10
+    type: permit
+    description: Make routes learned over MLAG Peer-link less preferred on spines to ensure optimal routing
+    set:
+    - origin incomplete
+- name: RM-CONN-2-BGP
+  sequence_numbers:
+  - sequence: 10
+    type: permit
+    match:
+    - ip address prefix-list PL-LOOPBACKS-EVPN-OVERLAY
+- name: RM-CONN-2-BGP-VRFS
+  sequence_numbers:
+  - sequence: 10
+    type: deny
+    match:
+    - ip address prefix-list PL-MLAG-PEER-VRFS
+  - sequence: 20
+    type: permit
+router_bfd:
+  multihop:
+    interval: 300
+    min_rx: 300
+    multiplier: 3
+router_bgp:
+  as: '65103'
+  router_id: 10.101.1.6
+  maximum_paths:
+    paths: 4
+  bgp:
+    default:
+      ipv4_unicast: false
+  peer_groups:
+  - name: MLAG-IPv4-UNDERLAY-PEER
+    metadata:
+      type: ipv4
+    remote_as: '65103'
+    description: marpla-dc-1-ext-l05
+    next_hop_self: true
+    send_community: all
+    maximum_routes: 256000
+    route_map_in: RM-MLAG-PEER-IN
+  - name: IPv4-UNDERLAY-PEERS
+    metadata:
+      type: ipv4
+    send_community: all
+    maximum_routes: 256000
+  - name: EVPN-OVERLAY-PEERS
+    metadata:
+      type: evpn
+    update_source: Loopback0
+    bfd: true
+    ebgp_multihop: 3
+    send_community: all
+    maximum_routes: 0
+  neighbors:
+  - ip_address: 10.101.21.8
+    peer_group: MLAG-IPv4-UNDERLAY-PEER
+    metadata:
+      peer: marpla-dc-1-ext-l05
+    description: marpla-dc-1-ext-l05_Vlan4093
+  - ip_address: 10.101.10.20
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65100'
+    metadata:
+      peer: marpla-dc-1-s01
+    description: marpla-dc-1-s01_Ethernet6
+  - ip_address: 10.101.10.22
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65100'
+    metadata:
+      peer: marpla-dc-1-s02
+    description: marpla-dc-1-s02_Ethernet6
+  - ip_address: 10.101.0.1
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65100'
+    metadata:
+      peer: marpla-dc-1-s01
+    description: marpla-dc-1-s01_Loopback0
+  - ip_address: 10.101.0.2
+    peer_group: EVPN-OVERLAY-PEERS
+    remote_as: '65100'
+    metadata:
+      peer: marpla-dc-1-s02
+    description: marpla-dc-1-s02_Loopback0
+  redistribute:
+    connected:
+      enabled: true
+      route_map: RM-CONN-2-BGP
+  vlans:
+  - id: 110
+    metadata:
+      tenants:
+      - EXT
+    rd: 10.101.1.6:110
+    route_targets:
+      both:
+      - 110:110
+    redistribute_routes:
+    - learned
+  - id: 121
+    metadata:
+      tenants:
+      - EXT
+    rd: 10.101.1.6:121
+    route_targets:
+      both:
+      - 121:121
+    redistribute_routes:
+    - learned
+  address_family_evpn:
+    peer_groups:
+    - name: EVPN-OVERLAY-PEERS
+      activate: true
+  address_family_ipv4:
+    peer_groups:
+    - name: MLAG-IPv4-UNDERLAY-PEER
+      activate: true
+    - name: IPv4-UNDERLAY-PEERS
+      activate: true
+    - name: EVPN-OVERLAY-PEERS
+      activate: false
+  vrfs:
+  - name: EXT
+    rd: 10.101.1.6:10
+    route_targets:
+      import:
+      - address_family: evpn
+        route_targets:
+        - '10:10'
+      export:
+      - address_family: evpn
+        route_targets:
+        - '10:10'
+    router_id: 10.101.1.6
+    neighbors:
+    - ip_address: 10.101.21.8
+      peer_group: MLAG-IPv4-UNDERLAY-PEER
+      description: marpla-dc-1-ext-l05_Vlan3009
+    redistribute:
+      connected:
+        enabled: true
+        route_map: RM-CONN-2-BGP-VRFS
+service_routing_protocols_model: multi-agent
+spanning_tree:
+  mode: mstp
+  mst_instances:
+  - id: '0'
+    priority: 16384
+  no_spanning_tree_vlan: 4093-4094
+static_routes:
+- vrf: MGMT
+  prefix: 0.0.0.0/0
+  next_hop: 10.30.0.1
+transceiver_qsfp_default_mode_4x10: true
+vlan_interfaces:
+- name: Vlan4093
+  description: MLAG_L3
+  shutdown: false
+  ip_address: 10.101.21.9/31
+  mtu: 9214
+- name: Vlan4094
+  description: MLAG
+  shutdown: false
+  ip_address: 10.101.20.9/31
+  mtu: 9214
+  no_autostate: true
+- name: Vlan110
+  description: EXT_FW
+  shutdown: false
+  vrf: EXT
+  ip_address_virtual: 10.1.10.1/24
+  metadata:
+    tenants:
+    - EXT
+    tags:
+    - ext
+    - dci
+- name: Vlan121
+  description: EXT_DC1_LOCAL
+  shutdown: false
+  vrf: EXT
+  ip_address_virtual: 10.1.21.1/24
+  metadata:
+    tenants:
+    - EXT
+    tags:
+    - dc1-ext
+- name: Vlan3009
+  description: MLAG_L3_VRF_EXT
+  shutdown: false
+  vrf: EXT
+  ip_address: 10.101.21.9/31
+  mtu: 9214
+  metadata:
+    tenants:
+    - EXT
+    type: underlay_peering
+vlan_internal_order:
+  allocation: ascending
+  range:
+    beginning: 1006
+    ending: 1199
+vlans:
+- id: 4093
+  name: MLAG_L3
+  trunk_groups:
+  - MLAG
+  metadata:
+    tenants:
+    - system
+- id: 4094
+  name: MLAG
+  trunk_groups:
+  - MLAG
+  metadata:
+    tenants:
+    - system
+- id: 110
+  name: EXT_FW
+  metadata:
+    tenants:
+    - EXT
+- id: 121
+  name: EXT_DC1_LOCAL
+  metadata:
+    tenants:
+    - EXT
+- id: 3009
+  name: MLAG_L3_VRF_EXT
+  trunk_groups:
+  - MLAG
+  metadata:
+    tenants:
+    - EXT
+vrfs:
+- name: MGMT
+  ip_routing: false
+- name: EXT
+  ip_routing: true
+  metadata:
+    tenants:
+    - EXT
+vxlan_interface:
+  vxlan1:
+    description: marpla-dc-1-ext-l06_VTEP
+    vxlan:
+      source_interface: Loopback1
+      udp_port: 4789
+      virtual_router_encapsulation_mac_address: mlag-system-id
+      vlans:
+      - id: 110
+        vni: 1000110
+      - id: 121
+        vni: 1000121
+      vrfs:
+      - name: EXT
+        vni: 1009000

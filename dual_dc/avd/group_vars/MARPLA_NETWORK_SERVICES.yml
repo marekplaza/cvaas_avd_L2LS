@@ -1,0 +1,93 @@
+---
+# One tenant + VRF per security zone, identical in both DCs.
+#
+# L2VNI = mac_vrf_vni_base + VLAN ID:  ext 100xxxx, wew 200xxxx, priv 300xxxx
+# Anycast gateway (ip_address_virtual + virtual_router_mac_address) is the same
+# in DC1 and DC2, so the geo-stretched A/P firewall cluster sees one gateway.
+#
+# VLAN placement is driven by tags (a VLAN lands on a node when any tag matches):
+#   <zone>      -> zone leaf pairs in both DCs
+#   dci         -> EVPN gateways (spines): only these VNIs cross the DCI
+#   dc1-<zone>  -> zone leaf pair in DC1 only (local, not stretched)
+#   dc2-<zone>  -> zone leaf pair in DC2 only (local, not stretched)
+#
+# mac_vrf_id_base: 0 keeps route distinguishers/targets at <x>:<VLAN ID>,
+# because a 7-digit VNI does not fit into an IP:number RD.
+
+tenants:
+  - name: EXT
+    mac_vrf_vni_base: 1000000
+    mac_vrf_id_base: 0
+    vrfs:
+      - name: EXT
+        vrf_id: 10
+        vrf_vni: 1009000
+        svis:
+          - id: 110
+            name: EXT_FW
+            tags: [ext, dci]
+            enabled: true
+            ip_address_virtual: 10.1.10.1/24
+          - id: 121
+            name: EXT_DC1_LOCAL
+            tags: [dc1-ext]
+            enabled: true
+            ip_address_virtual: 10.1.21.1/24
+          - id: 122
+            name: EXT_DC2_LOCAL
+            tags: [dc2-ext]
+            enabled: true
+            ip_address_virtual: 10.1.22.1/24
+
+  - name: WEW
+    mac_vrf_vni_base: 2000000
+    mac_vrf_id_base: 0
+    vrfs:
+      - name: WEW
+        vrf_id: 20
+        vrf_vni: 2009000
+        svis:
+          - id: 210
+            name: WEW_FW
+            tags: [wew, dci]
+            enabled: true
+            ip_address_virtual: 10.2.10.1/24
+          - id: 221
+            name: WEW_DC1_LOCAL
+            tags: [dc1-wew]
+            enabled: true
+            ip_address_virtual: 10.2.21.1/24
+          - id: 222
+            name: WEW_DC2_LOCAL
+            tags: [dc2-wew]
+            enabled: true
+            ip_address_virtual: 10.2.22.1/24
+
+  - name: PRIV
+    mac_vrf_vni_base: 3000000
+    mac_vrf_id_base: 0
+    vrfs:
+      - name: PRIV
+        vrf_id: 30
+        vrf_vni: 3009000
+        svis:
+          - id: 310
+            name: PRIV_FW
+            tags: [priv, dci]
+            enabled: true
+            ip_address_virtual: 10.3.10.1/24
+          - id: 321
+            name: PRIV_DC1_LOCAL
+            tags: [dc1-priv]
+            enabled: true
+            ip_address_virtual: 10.3.21.1/24
+          - id: 322
+            name: PRIV_DC2_LOCAL
+            tags: [dc2-priv]
+            enabled: true
+            ip_address_virtual: 10.3.22.1/24
+    # Firewall cluster HA/heartbeat - pure L2, stretched between DCs
+    l2vlans:
+      - id: 399
+        name: FW_HA
+        tags: [priv, dci]

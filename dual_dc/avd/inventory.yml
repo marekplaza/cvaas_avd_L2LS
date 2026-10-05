@@ -1,0 +1,111 @@
+---
+all:
+  children:
+
+    CV_SERVERS:
+      hosts:
+        lab_cv_instance:
+          ansible_host: "www.cv-prod-euwest-2.arista.io"
+
+    # All switches of both data centers (FW cluster nodes are not managed by AVD)
+    MARPLA_DCS:
+      children:
+
+        MARPLA_DC1:
+          children:
+            MARPLA_DC1_SPINES:
+              vars:
+                type: spine
+              hosts:
+                marpla-dc-1-s01:
+                  ansible_host: 10.30.11.1
+                marpla-dc-1-s02:
+                  ansible_host: 10.30.11.2
+            MARPLA_DC1_LEAFS:
+              vars:
+                type: l3leaf
+              children:
+                MARPLA_DC1_WEW:
+                  hosts:
+                    marpla-dc-1-wew-l01:
+                      ansible_host: 10.30.12.1
+                    marpla-dc-1-wew-l02:
+                      ansible_host: 10.30.12.2
+                MARPLA_DC1_PRIV:
+                  hosts:
+                    marpla-dc-1-priv-l03:
+                      ansible_host: 10.30.12.3
+                    marpla-dc-1-priv-l04:
+                      ansible_host: 10.30.12.4
+                MARPLA_DC1_EXT:
+                  hosts:
+                    marpla-dc-1-ext-l05:
+                      ansible_host: 10.30.12.5
+                    marpla-dc-1-ext-l06:
+                      ansible_host: 10.30.12.6
+
+        MARPLA_DC2:
+          children:
+            MARPLA_DC2_SPINES:
+              vars:
+                type: spine
+              hosts:
+                marpla-dc-2-s01:
+                  ansible_host: 10.30.21.1
+                marpla-dc-2-s02:
+                  ansible_host: 10.30.21.2
+            MARPLA_DC2_LEAFS:
+              vars:
+                type: l3leaf
+              children:
+                MARPLA_DC2_WEW:
+                  hosts:
+                    marpla-dc-2-wew-l01:
+                      ansible_host: 10.30.22.1
+                    marpla-dc-2-wew-l02:
+                      ansible_host: 10.30.22.2
+                MARPLA_DC2_PRIV:
+                  hosts:
+                    marpla-dc-2-priv-l03:
+                      ansible_host: 10.30.22.3
+                    marpla-dc-2-priv-l04:
+                      ansible_host: 10.30.22.4
+                MARPLA_DC2_EXT:
+                  hosts:
+                    marpla-dc-2-ext-l05:
+                      ansible_host: 10.30.22.5
+                    marpla-dc-2-ext-l06:
+                      ansible_host: 10.30.22.6
+
+    # Tenants / VLANs / VRFs shared by both DCs
+    MARPLA_NETWORK_SERVICES:
+      children:
+        MARPLA_DC1:
+        MARPLA_DC2:
+
+    # Geo-stretched A/P firewall cluster connected to every zone leaf pair
+    MARPLA_CONNECTED_ENDPOINTS:
+      children:
+        MARPLA_DC1:
+        MARPLA_DC2:
+
+    # Security zones (dmz:<zone> CloudVision tag). Priority makes these
+    # generate_cv_tags win over the generic one in MARPLA_DCS.
+    ZONE_WEW:
+      vars:
+        ansible_group_priority: 10
+      children:
+        MARPLA_DC1_WEW:
+        MARPLA_DC2_WEW:
+    ZONE_PRIV:
+      vars:
+        ansible_group_priority: 10
+      children:
+        MARPLA_DC1_PRIV:
+        MARPLA_DC2_PRIV:
+    ZONE_EXT:
+      vars:
+        ansible_group_priority: 10
+      children:
+        MARPLA_DC1_EXT:
+        MARPLA_DC2_EXT:

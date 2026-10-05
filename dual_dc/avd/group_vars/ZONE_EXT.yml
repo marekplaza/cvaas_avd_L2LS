@@ -1,0 +1,9 @@
+---
+# Security zone "ext" - leaf pairs in DC1 and DC2 get CloudVision tag dmz:ext
+generate_cv_tags:
+  topology_hints: true
+  device_tags:
+    - name: owner
+      value: marpla
+    - name: dmz
+      value: ext

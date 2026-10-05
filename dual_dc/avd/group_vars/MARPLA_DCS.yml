@@ -1,0 +1,75 @@
+---
+# Settings common to both data centers
+
+# Spines are EVPN route servers for their own DC *and* EVPN multi-domain
+# gateways towards the other DC. A gateway must be a VTEP, so the default
+# spine node type is extended with VTEP and network services (VLANs/VRFs).
+custom_node_type_keys:
+  - key: spine
+    type: spine
+    default_evpn_role: server
+    vtep: true
+    network_services:
+      l2: true
+      l3: true
+    cv_tags_topology_type: spine
+
+p2p_uplinks_mtu: 9214
+
+generate_cv_tags:
+  topology_hints: true
+  device_tags:
+    - name: owner
+      value: marpla
+
+# Management
+mgmt_gateway: 10.30.0.1
+mgmt_interface_settings:
+  interface: Management1
+
+dns_settings:
+  domain: avd.lab
+  servers:
+    - ip_address: 8.8.8.8
+      vrf: use_mgmt_interface_vrf
+
+management_eapi:
+  enabled: true
+  enable_http: false
+  enable_https: true
+
+ntp_settings:
+  server_vrf: use_mgmt_interface_vrf
+  servers:
+    - name: time.google.com
+    - name: time.windows.com
+    - name: time.apple.com
+
+aaa_settings:
+  local_users:
+    - name: arista
+      privilege: 15
+      role: network-admin
+      sha512_password: "$6$GgJDMeBVxpUHjqLw$LUbUYX7pnVUjvcxoaAeGW0llEhfuX9XKiQRRx7oqFTuHUEYeFxQmDwhT.XcQvAiJsOG7YtAoTGuV7nRTBxF6r1"
+
+custom_structured_configuration_daemon_terminattr:
+  cvaddrs:
+    - apiserver.cv-prod-euwest-2.arista.io:443
+  cvauth:
+    method: token-secure
+    token_file: /mnt/flash/cv-onboarding-token
+  cvvrf: MGMT
+  disable_aaa: true
+  smashexcludes: ale,flexCounter,hardware,kni,pulse,strata
+  ingestexclude: /Sysdb/cell/1/agent,/Sysdb/cell/2/agent
+
+# eAPI connection used by make deploy / make test
+ansible_user: arista
+ansible_password: arista
+ansible_network_os: arista.eos.eos
+ansible_become: true
+ansible_become_method: enable
+ansible_connection: httpapi
+ansible_httpapi_port: 443
+ansible_httpapi_use_ssl: true
+ansible_httpapi_validate_certs: false
