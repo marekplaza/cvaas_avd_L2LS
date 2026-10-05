@@ -21,6 +21,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 2
+    - afi: rt-membership
+      num_peers: 2
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -47,6 +49,8 @@ anta.tests.routing.bgp:
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
+      num_peers: 2
+    - afi: rt-membership
       num_peers: 2
     - afi: ipv4
       safi: unicast
@@ -75,6 +79,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 2
+    - afi: rt-membership
+      num_peers: 2
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -101,6 +107,8 @@ anta.tests.routing.bgp:
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
+      num_peers: 2
+    - afi: rt-membership
       num_peers: 2
     - afi: ipv4
       safi: unicast
@@ -151,6 +159,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 8
+    - afi: rt-membership
+      num_peers: 8
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -200,6 +210,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 8
+    - afi: rt-membership
+      num_peers: 8
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -226,6 +238,8 @@ anta.tests.routing.bgp:
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
+      num_peers: 2
+    - afi: rt-membership
       num_peers: 2
     - afi: ipv4
       safi: unicast
@@ -254,6 +268,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 2
+    - afi: rt-membership
+      num_peers: 2
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -280,6 +296,8 @@ anta.tests.routing.bgp:
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
+      num_peers: 2
+    - afi: rt-membership
       num_peers: 2
     - afi: ipv4
       safi: unicast
@@ -308,6 +326,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 2
+    - afi: rt-membership
+      num_peers: 2
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -335,6 +355,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 2
+    - afi: rt-membership
+      num_peers: 2
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -361,6 +383,8 @@ anta.tests.routing.bgp:
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
+      num_peers: 2
+    - afi: rt-membership
       num_peers: 2
     - afi: ipv4
       safi: unicast
@@ -411,6 +435,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 8
+    - afi: rt-membership
+      num_peers: 8
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -460,6 +486,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 8
+    - afi: rt-membership
+      num_peers: 8
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -487,6 +515,8 @@ anta.tests.routing.bgp:
     address_families:
     - afi: evpn
       num_peers: 2
+    - afi: rt-membership
+      num_peers: 2
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -513,6 +543,8 @@ anta.tests.routing.bgp:
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
+      num_peers: 2
+    - afi: rt-membership
       num_peers: 2
     - afi: ipv4
       safi: unicast
@@ -1296,6 +1328,107 @@ anta.tests.evpn:
     prefixes:
     - address: 10.2.21.0/24
       vni: 2009000
+    filters:
+      tags:
+      - marpla-dc-2-wew-l02
+marpla_tests:
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '10:10'
+    - 110:110
+    - 121:121
+    filters:
+      tags:
+      - marpla-dc-1-ext-l05
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '10:10'
+    - 110:110
+    - 121:121
+    filters:
+      tags:
+      - marpla-dc-1-ext-l06
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '30:30'
+    - 310:310
+    - 321:321
+    - 399:399
+    filters:
+      tags:
+      - marpla-dc-1-priv-l03
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '30:30'
+    - 310:310
+    - 321:321
+    - 399:399
+    filters:
+      tags:
+      - marpla-dc-1-priv-l04
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '20:20'
+    - 210:210
+    - 221:221
+    filters:
+      tags:
+      - marpla-dc-1-wew-l01
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '20:20'
+    - 210:210
+    - 221:221
+    filters:
+      tags:
+      - marpla-dc-1-wew-l02
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '10:10'
+    - 110:110
+    - 122:122
+    filters:
+      tags:
+      - marpla-dc-2-ext-l05
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '10:10'
+    - 110:110
+    - 122:122
+    filters:
+      tags:
+      - marpla-dc-2-ext-l06
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '30:30'
+    - 310:310
+    - 322:322
+    - 399:399
+    filters:
+      tags:
+      - marpla-dc-2-priv-l03
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '30:30'
+    - 310:310
+    - 322:322
+    - 399:399
+    filters:
+      tags:
+      - marpla-dc-2-priv-l04
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '20:20'
+    - 210:210
+    - 222:222
+    filters:
+      tags:
+      - marpla-dc-2-wew-l01
+- VerifyEVPNRoutesMatchImportedRT:
+    route_targets:
+    - '20:20'
+    - 210:210
+    - 222:222
     filters:
       tags:
       - marpla-dc-2-wew-l02

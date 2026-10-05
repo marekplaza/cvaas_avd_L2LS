@@ -762,6 +762,12 @@ router bgp 65200
       neighbor 10.100.0.0 activate
       neighbor 10.100.0.6 activate
    !
+   address-family rt-membership
+      neighbor EVPN-OVERLAY-CORE activate
+      neighbor EVPN-OVERLAY-CORE default-route-target only
+      neighbor EVPN-OVERLAY-PEERS activate
+      neighbor EVPN-OVERLAY-PEERS default-route-target only
+   !
    vrf EXT
       rd 10.102.0.1:10
       route-target import evpn 10:10

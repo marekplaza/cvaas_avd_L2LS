@@ -457,6 +457,16 @@ router_bgp:
     - domain: all
       identifier: 0000:0000:0002:0002:0002
       route_target_import: 00:00:00:02:00:02
+  address_family_rtc:
+    peer_groups:
+    - name: EVPN-OVERLAY-PEERS
+      activate: true
+      default_route_target:
+        only: true
+    - name: EVPN-OVERLAY-CORE
+      activate: true
+      default_route_target:
+        only: true
   address_family_ipv4:
     peer_groups:
     - name: IPv4-UNDERLAY-PEERS

@@ -16,6 +16,11 @@ custom_node_type_keys:
 
 p2p_uplinks_mtu: 9214
 
+# BGP Route Target Constraint (RFC 4684) on the EVPN overlay: every peer
+# announces the RTs it imports, so a route server only sends a leaf the EVPN
+# routes of the leaf's own zone. Gateways import all zones and still get all.
+evpn_overlay_bgp_rtc: true
+
 generate_cv_tags:
   topology_hints: true
   device_tags:

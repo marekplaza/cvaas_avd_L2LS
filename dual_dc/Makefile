@@ -1,5 +1,7 @@
 CURRENT_DIR := $(shell pwd)
 TOPO := $(CURRENT_DIR)/clab/topology.clab.yml
+# custom ANTA tests (marpla_tests) used by the DCI catalog
+ANTA_ENV := PYTHONPATH=$(CURRENT_DIR)/avd/anta_custom$${PYTHONPATH:+:$$PYTHONPATH}
 
 .PHONY: help
 help: ## Display help message
@@ -40,12 +42,12 @@ diff: ## Show the diff between running config and designed config
 .PHONY: test
 test: ## fw_test (generates traffic for type-2 checks) + ANTA: AVD catalogs and BGP/EVPN/DCI tests
 	-$(CURRENT_DIR)/fw_test.sh
-	cd $(CURRENT_DIR)/avd; ansible-playbook playbooks/avd_validate.yml
+	cd $(CURRENT_DIR)/avd; $(ANTA_ENV) ansible-playbook playbooks/avd_validate.yml
 
 .PHONY: test_dci
 test_dci: ## fw_test + only the BGP/EVPN/DCI tests (avd/anta_catalogs/dci_tests.yml)
 	-$(CURRENT_DIR)/fw_test.sh
-	cd $(CURRENT_DIR)/avd; ansible-playbook playbooks/avd_validate.yml -e avd_catalogs_enabled=false
+	cd $(CURRENT_DIR)/avd; $(ANTA_ENV) ansible-playbook playbooks/avd_validate.yml -e avd_catalogs_enabled=false
 
 .PHONY: fw_test
 fw_test: ## Data-plane test from both FW nodes: anycast GWs, stretched VLANs and HA VLAN across DCI

@@ -14,8 +14,12 @@ What is verified:
     - VTEP peers = local leaf pairs + remote gateways
     - only DCI VNIs are configured on the gateway
     - EVPN type-5 routes for the DC-local subnets of both DCs
+  all devices
+    - RT Constraint: rt-membership sessions with every EVPN peer
   leafs
     - all BGP sessions up and peer counts
+    - RT Constraint: the BGP EVPN table holds only routes with an RT of the leaf's zone
+      (custom test marpla_tests.VerifyEVPNRoutesMatchImportedRT)
     - VTEP peers = only the local gateways (no tunnels to the other DC)
     - zone VNIs only
     - EVPN type-5 route for the same zone's subnet that is local to the other DC
@@ -112,6 +116,7 @@ def main() -> None:
         add("anta.tests.routing.bgp", "VerifyBGPPeerCount", h,
             {"address_families": [
                 {"afi": "evpn", "num_peers": len(evpn)},
+                {"afi": "rt-membership", "num_peers": len(evpn)},
                 {"afi": "ipv4", "safi": "unicast", "vrf": "default", "num_peers": len(ipv4)},
             ]})
         add("anta.tests.vxlan", "VerifyVxlanVniBinding", h, {"bindings": bindings(c)})
@@ -152,6 +157,10 @@ def main() -> None:
         add("anta.tests.vxlan", "VerifyVxlanVtep", h, {"vteps": sorted(local_gws)})
         add("anta.tests.evpn", "VerifyEVPNType5Routes", h, {"prefixes": [
             {"address": f"10.{octet}.2{3 - dc}.0/24", "vni": vrf_vni(c, zone.upper())}]})
+        bgp = c["router_bgp"]
+        imported = {rt for v in bgp.get("vlans", []) for rt in v["route_targets"]["both"]}
+        imported |= {rt for v in bgp.get("vrfs", []) for imp in v["route_targets"]["import"] for rt in imp["route_targets"]}
+        add("marpla_tests", "VerifyEVPNRoutesMatchImportedRT", h, {"route_targets": sorted(imported)})
         l2vni = next(v["vni"] for v in vxlan(c)["vlans"] if v["id"] == vlan)
         add("anta.tests.routing.bgp", "VerifyEVPNType2Route", h, {"vxlan_endpoints": [
             {"address": f"10.{octet}.10.{FW_HOST_OCTET[3 - dc]}", "vni": l2vni}]})
