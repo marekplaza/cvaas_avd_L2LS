@@ -1,4 +1,4 @@
-# l04
+# marpla-l02
 
 ## Table of Contents
 
@@ -67,7 +67,7 @@
 
 | Management Interface | Description | Type | VRF | IP Address | Gateway |
 | -------------------- | ----------- | ---- | --- | ---------- | ------- |
-| Management1 | OOB_MANAGEMENT | oob | MGMT | 10.0.2.4/16 | 10.0.0.1 |
+| Management1 | OOB_MANAGEMENT | oob | MGMT | 10.0.2.2/16 | 10.0.0.1 |
 
 ##### IPv6
 
@@ -83,7 +83,7 @@ interface Management1
    description OOB_MANAGEMENT
    no shutdown
    vrf MGMT
-   ip address 10.0.2.4/16
+   ip address 10.0.2.2/16
 ```
 
 ### DNS Domain
@@ -250,8 +250,8 @@ daemon TerminAttr
 
 | Host Name | Description | IPv4 Address | ICMP Echo Size | Probing Interface Set | Address Only | URL |
 | --------- | ----------- | ------------ | -------------- | --------------------- | ------------ | --- |
-| h01 | - | 10.100.100.101 | - | - | True | - |
-| h02 | - | 10.200.200.202 | - | - | True | - |
+| marpla-h01 | - | 10.100.100.101 | - | - | True | - |
+| marpla-h02 | - | 10.200.200.202 | - | - | True | - |
 
 ### Monitor Connectivity Device Configuration
 
@@ -264,10 +264,10 @@ monitor connectivity
       interface set IF_SET Loopback101
       local-interfaces IF_SET address-only default
       !
-      host h01
+      host marpla-h01
          ip 10.100.100.101
       !
-      host h02
+      host marpla-h02
          ip 10.200.200.202
 ```
 
@@ -277,7 +277,7 @@ monitor connectivity
 
 | Domain-id | Local-interface | Peer-address | Peer-link |
 | --------- | --------------- | ------------ | --------- |
-| pod1 | Vlan4094 | 100.65.1.4 | Port-Channel3 |
+| pod0 | Vlan4094 | 100.65.1.0 | Port-Channel3 |
 
 Dual primary detection is disabled.
 
@@ -286,9 +286,9 @@ Dual primary detection is disabled.
 ```eos
 !
 mlag configuration
-   domain-id pod1
+   domain-id pod0
    local-interface Vlan4094
-   peer-address 100.65.1.4
+   peer-address 100.65.1.0
    peer-link Port-Channel3
    reload-delay mlag 300
    reload-delay non-mlag 330
@@ -340,7 +340,7 @@ vlan internal order ascending range 1006 1199
 
 | VLAN ID | Name | Trunk Groups |
 | ------- | ---- | ------------ |
-| 200 | VLAN200 | - |
+| 100 | VLAN101 | - |
 | 3000 | MLAG_L3_VRF_VRF1 | MLAG |
 | 4093 | MLAG_L3 | MLAG |
 | 4094 | MLAG | MLAG |
@@ -349,8 +349,8 @@ vlan internal order ascending range 1006 1199
 
 ```eos
 !
-vlan 200
-   name VLAN200
+vlan 100
+   name VLAN101
 !
 vlan 3000
    name MLAG_L3_VRF_VRF1
@@ -375,9 +375,9 @@ vlan 4094
 
 | Interface | Description | Mode | VLANs | Native VLAN | Trunk Group | Channel-Group |
 | --------- | ----------- | ---- | ----- | ----------- | ----------- | ------------- |
-| Ethernet3 | MLAG_l03_Ethernet3 | *trunk | *- | *- | *MLAG | 3 |
-| Ethernet4 | MLAG_l03_Ethernet4 | *trunk | *- | *- | *MLAG | 3 |
-| Ethernet20 | SERVER_h02 | *trunk | *200 | *- | *- | 20 |
+| Ethernet3 | MLAG_marpla-l01_Ethernet3 | *trunk | *- | *- | *MLAG | 3 |
+| Ethernet4 | MLAG_marpla-l01_Ethernet4 | *trunk | *- | *- | *MLAG | 3 |
+| Ethernet10 | SERVER_marpla-h01 | *trunk | *100 | *- | *- | 10 |
 
 *Inherited from Port-Channel Interface
 
@@ -385,41 +385,41 @@ vlan 4094
 
 | Interface | Description | Channel Group | IP Address | VRF | MTU | Shutdown | ACL In | ACL Out |
 | --------- | ----------- | ------------- | ---------- | --- | --- | -------- | ------ | ------- |
-| Ethernet1 | P2P_s01_Ethernet4 | - | 100.65.0.13/31 | default | 9214 | False | - | - |
-| Ethernet2 | P2P_s02_Ethernet4 | - | 100.65.0.15/31 | default | 9214 | False | - | - |
+| Ethernet1 | P2P_marpla-s01_Ethernet2 | - | 100.65.0.5/31 | default | 9214 | False | - | - |
+| Ethernet2 | P2P_marpla-s02_Ethernet2 | - | 100.65.0.7/31 | default | 9214 | False | - | - |
 
 #### Ethernet Interfaces Device Configuration
 
 ```eos
 !
 interface Ethernet1
-   description P2P_s01_Ethernet4
+   description P2P_marpla-s01_Ethernet2
    no shutdown
    mtu 9214
    no switchport
-   ip address 100.65.0.13/31
+   ip address 100.65.0.5/31
 !
 interface Ethernet2
-   description P2P_s02_Ethernet4
+   description P2P_marpla-s02_Ethernet2
    no shutdown
    mtu 9214
    no switchport
-   ip address 100.65.0.15/31
+   ip address 100.65.0.7/31
 !
 interface Ethernet3
-   description MLAG_l03_Ethernet3
+   description MLAG_marpla-l01_Ethernet3
    no shutdown
    channel-group 3 mode active
 !
 interface Ethernet4
-   description MLAG_l03_Ethernet4
+   description MLAG_marpla-l01_Ethernet4
    no shutdown
    channel-group 3 mode active
 !
-interface Ethernet20
-   description SERVER_h02
+interface Ethernet10
+   description SERVER_marpla-h01
    no shutdown
-   channel-group 20 mode active
+   channel-group 10 mode active
 ```
 
 ### Port-Channel Interfaces
@@ -430,27 +430,27 @@ interface Ethernet20
 
 | Interface | Description | Mode | VLANs | Native VLAN | Trunk Group | LACP Fallback Timeout | LACP Fallback Mode | MLAG ID | EVPN ESI |
 | --------- | ----------- | ---- | ----- | ----------- | ----------- | --------------------- | ------------------ | ------- | -------- |
-| Port-Channel3 | MLAG_l03_Port-Channel3 | trunk | - | - | MLAG | - | - | - | - |
-| Port-Channel20 | SERVER_h02 | trunk | 200 | - | - | - | - | 20 | - |
+| Port-Channel3 | MLAG_marpla-l01_Port-Channel3 | trunk | - | - | MLAG | - | - | - | - |
+| Port-Channel10 | SERVER_marpla-h01 | trunk | 100 | - | - | - | - | 10 | - |
 
 #### Port-Channel Interfaces Device Configuration
 
 ```eos
 !
 interface Port-Channel3
-   description MLAG_l03_Port-Channel3
+   description MLAG_marpla-l01_Port-Channel3
    no shutdown
    switchport mode trunk
    switchport trunk group MLAG
    switchport
 !
-interface Port-Channel20
-   description SERVER_h02
+interface Port-Channel10
+   description SERVER_marpla-h01
    no shutdown
-   switchport trunk allowed vlan 200
+   switchport trunk allowed vlan 100
    switchport mode trunk
    switchport
-   mlag 20
+   mlag 10
 ```
 
 ### Loopback Interfaces
@@ -461,9 +461,9 @@ interface Port-Channel20
 
 | Interface | Description | VRF | IP Address |
 | --------- | ----------- | --- | ---------- |
-| Loopback0 | ROUTER_ID | default | 100.65.255.6/32 |
-| Loopback1 | VXLAN_TUNNEL_SOURCE | default | 100.65.254.5/32 |
-| Loopback101 | DIAG_VRF_VRF1 | VRF1 | 100.64.101.6/32 |
+| Loopback0 | ROUTER_ID | default | 100.65.255.4/32 |
+| Loopback1 | VXLAN_TUNNEL_SOURCE | default | 100.65.254.3/32 |
+| Loopback101 | DIAG_VRF_VRF1 | VRF1 | 100.64.101.4/32 |
 
 ##### IPv6
 
@@ -480,18 +480,18 @@ interface Port-Channel20
 interface Loopback0
    description ROUTER_ID
    no shutdown
-   ip address 100.65.255.6/32
+   ip address 100.65.255.4/32
 !
 interface Loopback1
    description VXLAN_TUNNEL_SOURCE
    no shutdown
-   ip address 100.65.254.5/32
+   ip address 100.65.254.3/32
 !
 interface Loopback101
    description DIAG_VRF_VRF1
    no shutdown
    vrf VRF1
-   ip address 100.64.101.6/32
+   ip address 100.64.101.4/32
 ```
 
 ### VLAN Interfaces
@@ -500,7 +500,7 @@ interface Loopback101
 
 | Interface | Description | VRF | MTU | Shutdown |
 | --------- | ----------- | --- | --- | -------- |
-| Vlan200 | VLAN200 | VRF1 | - | False |
+| Vlan100 | VLAN101 | VRF1 | - | False |
 | Vlan3000 | MLAG_L3_VRF_VRF1 | VRF1 | 9214 | False |
 | Vlan4093 | MLAG_L3 | default | 9214 | False |
 | Vlan4094 | MLAG | default | 9214 | False |
@@ -509,40 +509,40 @@ interface Loopback101
 
 | Interface | VRF | IP Address | IP Address Virtual | IP Router Virtual Address | ACL In | ACL Out |
 | --------- | --- | ---------- | ------------------ | ------------------------- | ------ | ------- |
-| Vlan200 | VRF1 | - | 10.200.200.1/24 | - | - | - |
-| Vlan3000 | VRF1 | 100.65.2.5/31 | - | - | - | - |
-| Vlan4093 | default | 100.65.2.5/31 | - | - | - | - |
-| Vlan4094 | default | 100.65.1.5/31 | - | - | - | - |
+| Vlan100 | VRF1 | - | 10.100.100.1/24 | - | - | - |
+| Vlan3000 | VRF1 | 100.65.2.1/31 | - | - | - | - |
+| Vlan4093 | default | 100.65.2.1/31 | - | - | - | - |
+| Vlan4094 | default | 100.65.1.1/31 | - | - | - | - |
 
 #### VLAN Interfaces Device Configuration
 
 ```eos
 !
-interface Vlan200
-   description VLAN200
+interface Vlan100
+   description VLAN101
    no shutdown
    vrf VRF1
-   ip address virtual 10.200.200.1/24
+   ip address virtual 10.100.100.1/24
 !
 interface Vlan3000
    description MLAG_L3_VRF_VRF1
    no shutdown
    mtu 9214
    vrf VRF1
-   ip address 100.65.2.5/31
+   ip address 100.65.2.1/31
 !
 interface Vlan4093
    description MLAG_L3
    no shutdown
    mtu 9214
-   ip address 100.65.2.5/31
+   ip address 100.65.2.1/31
 !
 interface Vlan4094
    description MLAG
    no shutdown
    mtu 9214
    no autostate
-   ip address 100.65.1.5/31
+   ip address 100.65.1.1/31
 ```
 
 ### VXLAN Interface
@@ -559,7 +559,7 @@ interface Vlan4094
 
 | VLAN | VNI | Flood List | Multicast Group |
 | ---- | --- | ---------- | --------------- |
-| 200 | 10200 | - | - |
+| 100 | 10100 | - | - |
 
 ##### VRF to VNI and Multicast Group Mappings
 
@@ -572,11 +572,11 @@ interface Vlan4094
 ```eos
 !
 interface Vxlan1
-   description l04_VTEP
+   description marpla-l02_VTEP
    vxlan source-interface Loopback1
    vxlan virtual-router encapsulation mac-address mlag-system-id
    vxlan udp-port 4789
-   vxlan vlan 200 vni 10200
+   vxlan vlan 100 vni 10100
    vxlan vrf VRF1 vni 1
 ```
 
@@ -656,7 +656,7 @@ ASN Notation: asplain
 
 | BGP AS | Router ID |
 | ------ | --------- |
-| 65102 | 100.65.255.6 |
+| 65101 | 100.65.255.4 |
 
 | BGP Tuning |
 | ---------- |
@@ -689,7 +689,7 @@ ASN Notation: asplain
 | Settings | Value |
 | -------- | ----- |
 | Address Family | ipv4 |
-| Remote AS | 65102 |
+| Remote AS | 65101 |
 | Next-hop self | True |
 | Send community | all |
 | Maximum routes | 256000 |
@@ -700,10 +700,10 @@ ASN Notation: asplain
 | -------- | --------- | --- | -------- | -------------- | -------------- | ----------------------- | ------------------------- | ---------- | --- | --------------------- | ---------------------- | ------- | ------------ |
 | 100.64.255.1 | 65100 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
 | 100.64.255.2 | 65100 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
-| 100.65.0.12 | 65100 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
-| 100.65.0.14 | 65100 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
-| 100.65.2.4 | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | default | - | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | - | - | - | - | - | - | - | - |
-| 100.65.2.4 | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | VRF1 | - | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | - | - | - | - | - | - | - | - |
+| 100.65.0.4 | 65100 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
+| 100.65.0.6 | 65100 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
+| 100.65.2.0 | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | default | - | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | - | - | - | - | - | - | - | - |
+| 100.65.2.0 | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | VRF1 | - | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | - | - | - | - | - | - | - | - |
 
 #### Router BGP EVPN Address Family
 
@@ -713,24 +713,24 @@ ASN Notation: asplain
 | ---------- | -------- | ------------ | ------------- | ----------- | ------------ | ------------- | ------------------------------ |
 | EVPN-OVERLAY-PEERS | True | - | - | - | - | default | - |
 
-#### Router BGP VLAN Aware Bundles
+#### Router BGP VLANs
 
-| VLAN Aware Bundle | Route-Distinguisher | Both Route-Target | Import Route Target | Export Route-Target | Redistribute | VLANs |
-| ----------------- | ------------------- | ----------------- | ------------------- | ------------------- | ------------ | ----- |
-| VRF1 | 100.65.255.6:1 | 1:1 | - | - | learned | 200 |
+| VLAN | Route-Distinguisher | Both Route-Target | Import Route Target | Export Route-Target | Redistribute |
+| ---- | ------------------- | ----------------- | ------------------- | ------------------- | ------------ |
+| 100 | 100.65.255.4:10100 | 10100:10100 | - | - | learned |
 
 #### Router BGP VRFs
 
 | VRF | Route-Distinguisher | Redistribute | Graceful Restart |
 | --- | ------------------- | ------------ | ---------------- |
-| VRF1 | 100.65.255.6:1 | connected | - |
+| VRF1 | 100.65.255.4:1 | connected | - |
 
 #### Router BGP Device Configuration
 
 ```eos
 !
-router bgp 65102
-   router-id 100.65.255.6
+router bgp 65101
+   router-id 100.65.255.4
    no bgp default ipv4-unicast
    maximum-paths 4
    neighbor EVPN-OVERLAY-PEERS peer group
@@ -743,33 +743,32 @@ router bgp 65102
    neighbor IPv4-UNDERLAY-PEERS send-community
    neighbor IPv4-UNDERLAY-PEERS maximum-routes 256000
    neighbor MLAG-IPv4-UNDERLAY-PEER peer group
-   neighbor MLAG-IPv4-UNDERLAY-PEER remote-as 65102
+   neighbor MLAG-IPv4-UNDERLAY-PEER remote-as 65101
    neighbor MLAG-IPv4-UNDERLAY-PEER next-hop-self
-   neighbor MLAG-IPv4-UNDERLAY-PEER description l03
+   neighbor MLAG-IPv4-UNDERLAY-PEER description marpla-l01
    neighbor MLAG-IPv4-UNDERLAY-PEER route-map RM-MLAG-PEER-IN in
    neighbor MLAG-IPv4-UNDERLAY-PEER send-community
    neighbor MLAG-IPv4-UNDERLAY-PEER maximum-routes 256000
    neighbor 100.64.255.1 peer group EVPN-OVERLAY-PEERS
    neighbor 100.64.255.1 remote-as 65100
-   neighbor 100.64.255.1 description s01_Loopback0
+   neighbor 100.64.255.1 description marpla-s01_Loopback0
    neighbor 100.64.255.2 peer group EVPN-OVERLAY-PEERS
    neighbor 100.64.255.2 remote-as 65100
-   neighbor 100.64.255.2 description s02_Loopback0
-   neighbor 100.65.0.12 peer group IPv4-UNDERLAY-PEERS
-   neighbor 100.65.0.12 remote-as 65100
-   neighbor 100.65.0.12 description s01_Ethernet4
-   neighbor 100.65.0.14 peer group IPv4-UNDERLAY-PEERS
-   neighbor 100.65.0.14 remote-as 65100
-   neighbor 100.65.0.14 description s02_Ethernet4
-   neighbor 100.65.2.4 peer group MLAG-IPv4-UNDERLAY-PEER
-   neighbor 100.65.2.4 description l03_Vlan4093
+   neighbor 100.64.255.2 description marpla-s02_Loopback0
+   neighbor 100.65.0.4 peer group IPv4-UNDERLAY-PEERS
+   neighbor 100.65.0.4 remote-as 65100
+   neighbor 100.65.0.4 description marpla-s01_Ethernet2
+   neighbor 100.65.0.6 peer group IPv4-UNDERLAY-PEERS
+   neighbor 100.65.0.6 remote-as 65100
+   neighbor 100.65.0.6 description marpla-s02_Ethernet2
+   neighbor 100.65.2.0 peer group MLAG-IPv4-UNDERLAY-PEER
+   neighbor 100.65.2.0 description marpla-l01_Vlan4093
    redistribute connected route-map RM-CONN-2-BGP
    !
-   vlan-aware-bundle VRF1
-      rd 100.65.255.6:1
-      route-target both 1:1
+   vlan 100
+      rd 100.65.255.4:10100
+      route-target both 10100:10100
       redistribute learned
-      vlan 200
    !
    address-family evpn
       neighbor EVPN-OVERLAY-PEERS activate
@@ -780,12 +779,12 @@ router bgp 65102
       neighbor MLAG-IPv4-UNDERLAY-PEER activate
    !
    vrf VRF1
-      rd 100.65.255.6:1
+      rd 100.65.255.4:1
       route-target import evpn 1:1
       route-target export evpn 1:1
-      router-id 100.65.255.6
-      neighbor 100.65.2.4 peer group MLAG-IPv4-UNDERLAY-PEER
-      neighbor 100.65.2.4 description l03_Vlan3000
+      router-id 100.65.255.4
+      neighbor 100.65.2.0 peer group MLAG-IPv4-UNDERLAY-PEER
+      neighbor 100.65.2.0 description marpla-l01_Vlan3000
       redistribute connected route-map RM-CONN-2-BGP-VRFS
 ```
 
@@ -839,7 +838,7 @@ router bfd
 
 | Sequence | Action |
 | -------- | ------ |
-| 10 | permit 100.65.2.4/31 |
+| 10 | permit 100.65.2.0/31 |
 
 #### Prefix-lists Device Configuration
 
@@ -850,7 +849,7 @@ ip prefix-list PL-LOOPBACKS-EVPN-OVERLAY
    seq 20 permit 100.65.254.0/24 eq 32
 !
 ip prefix-list PL-MLAG-PEER-VRFS
-   seq 10 permit 100.65.2.4/31
+   seq 10 permit 100.65.2.0/31
 ```
 
 ### Route-maps
@@ -917,11 +916,11 @@ vrf instance VRF1
 
 | Source NAT VRF | Source NAT IPv4 Address | Source NAT IPv6 Address |
 | -------------- | ----------------------- | ----------------------- |
-| VRF1 | 100.64.101.6 | - |
+| VRF1 | 100.64.101.4 | - |
 
 ### Virtual Source NAT Configuration
 
 ```eos
 !
-ip address virtual source-nat vrf VRF1 address 100.64.101.6
+ip address virtual source-nat vrf VRF1 address 100.64.101.4
 ```

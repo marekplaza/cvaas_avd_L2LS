@@ -16,50 +16,50 @@ enable_password:
   disabled: true
 ethernet_interfaces:
 - name: Ethernet1
-  description: P2P_l01_Ethernet2
+  description: P2P_marpla-l01_Ethernet2
   shutdown: false
   mtu: 9214
   ip_address: 100.65.0.2/31
   metadata:
-    peer: l01
+    peer: marpla-l01
     peer_interface: Ethernet2
     peer_type: l3leaf
   switchport:
     enabled: false
 - name: Ethernet2
-  description: P2P_l02_Ethernet2
+  description: P2P_marpla-l02_Ethernet2
   shutdown: false
   mtu: 9214
   ip_address: 100.65.0.6/31
   metadata:
-    peer: l02
+    peer: marpla-l02
     peer_interface: Ethernet2
     peer_type: l3leaf
   switchport:
     enabled: false
 - name: Ethernet3
-  description: P2P_l03_Ethernet2
+  description: P2P_marpla-l03_Ethernet2
   shutdown: false
   mtu: 9214
   ip_address: 100.65.0.10/31
   metadata:
-    peer: l03
+    peer: marpla-l03
     peer_interface: Ethernet2
     peer_type: l3leaf
   switchport:
     enabled: false
 - name: Ethernet4
-  description: P2P_l04_Ethernet2
+  description: P2P_marpla-l04_Ethernet2
   shutdown: false
   mtu: 9214
   ip_address: 100.65.0.14/31
   metadata:
-    peer: l04
+    peer: marpla-l04
     peer_interface: Ethernet2
     peer_type: l3leaf
   switchport:
     enabled: false
-hostname: s02
+hostname: marpla-s02
 ip_domain_lookup:
   source_interfaces:
   - name: Management1
@@ -96,21 +96,23 @@ management_interfaces:
 metadata:
   is_deployed: true
   platform: cEOS
-  pod_name: marpla_POD1
-  dc_name: marpla_DC1
+  pod_name: marpla-POD1
+  dc_name: marpla-DC1
   fabric_name: AVD_FABRIC
   validate_hardware:
     enabled: false
   cv_tags:
     device_tags:
     - name: topology_hint_datacenter
-      value: marpla_DC1
+      value: marpla-DC1
     - name: topology_hint_fabric
       value: AVD_FABRIC
     - name: topology_hint_pod
-      value: marpla_POD1
+      value: marpla-POD1
     - name: topology_hint_type
       value: spine
+    - name: owner
+      value: marpla
 ntp:
   local_interface:
     name: Management1
@@ -166,50 +168,50 @@ router_bgp:
     peer_group: IPv4-UNDERLAY-PEERS
     remote_as: '65101'
     metadata:
-      peer: l01
-    description: l01_Ethernet2
+      peer: marpla-l01
+    description: marpla-l01_Ethernet2
   - ip_address: 100.65.0.7
     peer_group: IPv4-UNDERLAY-PEERS
     remote_as: '65101'
     metadata:
-      peer: l02
-    description: l02_Ethernet2
+      peer: marpla-l02
+    description: marpla-l02_Ethernet2
   - ip_address: 100.65.0.11
     peer_group: IPv4-UNDERLAY-PEERS
     remote_as: '65102'
     metadata:
-      peer: l03
-    description: l03_Ethernet2
+      peer: marpla-l03
+    description: marpla-l03_Ethernet2
   - ip_address: 100.65.0.15
     peer_group: IPv4-UNDERLAY-PEERS
     remote_as: '65102'
     metadata:
-      peer: l04
-    description: l04_Ethernet2
+      peer: marpla-l04
+    description: marpla-l04_Ethernet2
   - ip_address: 100.65.255.3
     peer_group: EVPN-OVERLAY-PEERS
     remote_as: '65101'
     metadata:
-      peer: l01
-    description: l01_Loopback0
+      peer: marpla-l01
+    description: marpla-l01_Loopback0
   - ip_address: 100.65.255.4
     peer_group: EVPN-OVERLAY-PEERS
     remote_as: '65101'
     metadata:
-      peer: l02
-    description: l02_Loopback0
+      peer: marpla-l02
+    description: marpla-l02_Loopback0
   - ip_address: 100.65.255.5
     peer_group: EVPN-OVERLAY-PEERS
     remote_as: '65102'
     metadata:
-      peer: l03
-    description: l03_Loopback0
+      peer: marpla-l03
+    description: marpla-l03_Loopback0
   - ip_address: 100.65.255.6
     peer_group: EVPN-OVERLAY-PEERS
     remote_as: '65102'
     metadata:
-      peer: l04
-    description: l04_Loopback0
+      peer: marpla-l04
+    description: marpla-l04_Loopback0
   redistribute:
     connected:
       enabled: true

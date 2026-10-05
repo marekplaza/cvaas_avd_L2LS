@@ -7,24 +7,24 @@
     ansible_user: cvaas
     ansible_password: "{{ lookup('ansible.builtin.env', 'CV_API_TOKEN') }}"
     devices_to_decommission:
-      - hostname: s01
+      - hostname: marpla-s01
         serialNumber: CAFECAFECAFE0001
-        parentContainerName: s01
-      - hostname: s02
+        parentContainerName: marpla-s01
+      - hostname: marpla-s02
         serialNumber: CAFECAFECAFE0002
-        parentContainerName: s02
-      - hostname: l01
+        parentContainerName: marpla-s02
+      - hostname: marpla-l01
         serialNumber: CAFECAFECAFE0011
-        parentContainerName: l01
-      - hostname: l02
+        parentContainerName: marpla-l01
+      - hostname: marpla-l02
         serialNumber: CAFECAFECAFE0012
-        parentContainerName: l02
-      - hostname: l03
+        parentContainerName: marpla-l02
+      - hostname: marpla-l03
         serialNumber: CAFECAFECAFE0013
-        parentContainerName: l03
-      - hostname: l04
+        parentContainerName: marpla-l03
+      - hostname: marpla-l04
         serialNumber: CAFECAFECAFE0014
-        parentContainerName: l04
+        parentContainerName: marpla-l04
   tasks:
 
     - name: "Decommission {{ item.hostname }} (SN: {{ item.serialNumber }}) from CVaaS"

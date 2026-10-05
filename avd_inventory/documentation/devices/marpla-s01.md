@@ -1,4 +1,4 @@
-# s02
+# marpla-s01
 
 ## Table of Contents
 
@@ -48,7 +48,7 @@
 
 | Management Interface | Description | Type | VRF | IP Address | Gateway |
 | -------------------- | ----------- | ---- | --- | ---------- | ------- |
-| Management1 | OOB_MANAGEMENT | oob | MGMT | 10.0.1.2/16 | 10.0.0.1 |
+| Management1 | OOB_MANAGEMENT | oob | MGMT | 10.0.1.1/16 | 10.0.0.1 |
 
 ##### IPv6
 
@@ -64,7 +64,7 @@ interface Management1
    description OOB_MANAGEMENT
    no shutdown
    vrf MGMT
-   ip address 10.0.1.2/16
+   ip address 10.0.1.1/16
 ```
 
 ### DNS Domain
@@ -248,42 +248,42 @@ vlan internal order ascending range 1006 1199
 
 | Interface | Description | Channel Group | IP Address | VRF | MTU | Shutdown | ACL In | ACL Out |
 | --------- | ----------- | ------------- | ---------- | --- | --- | -------- | ------ | ------- |
-| Ethernet1 | P2P_l01_Ethernet2 | - | 100.65.0.2/31 | default | 9214 | False | - | - |
-| Ethernet2 | P2P_l02_Ethernet2 | - | 100.65.0.6/31 | default | 9214 | False | - | - |
-| Ethernet3 | P2P_l03_Ethernet2 | - | 100.65.0.10/31 | default | 9214 | False | - | - |
-| Ethernet4 | P2P_l04_Ethernet2 | - | 100.65.0.14/31 | default | 9214 | False | - | - |
+| Ethernet1 | P2P_marpla-l01_Ethernet1 | - | 100.65.0.0/31 | default | 9214 | False | - | - |
+| Ethernet2 | P2P_marpla-l02_Ethernet1 | - | 100.65.0.4/31 | default | 9214 | False | - | - |
+| Ethernet3 | P2P_marpla-l03_Ethernet1 | - | 100.65.0.8/31 | default | 9214 | False | - | - |
+| Ethernet4 | P2P_marpla-l04_Ethernet1 | - | 100.65.0.12/31 | default | 9214 | False | - | - |
 
 #### Ethernet Interfaces Device Configuration
 
 ```eos
 !
 interface Ethernet1
-   description P2P_l01_Ethernet2
+   description P2P_marpla-l01_Ethernet1
    no shutdown
    mtu 9214
    no switchport
-   ip address 100.65.0.2/31
+   ip address 100.65.0.0/31
 !
 interface Ethernet2
-   description P2P_l02_Ethernet2
+   description P2P_marpla-l02_Ethernet1
    no shutdown
    mtu 9214
    no switchport
-   ip address 100.65.0.6/31
+   ip address 100.65.0.4/31
 !
 interface Ethernet3
-   description P2P_l03_Ethernet2
+   description P2P_marpla-l03_Ethernet1
    no shutdown
    mtu 9214
    no switchport
-   ip address 100.65.0.10/31
+   ip address 100.65.0.8/31
 !
 interface Ethernet4
-   description P2P_l04_Ethernet2
+   description P2P_marpla-l04_Ethernet1
    no shutdown
    mtu 9214
    no switchport
-   ip address 100.65.0.14/31
+   ip address 100.65.0.12/31
 ```
 
 ### Loopback Interfaces
@@ -294,7 +294,7 @@ interface Ethernet4
 
 | Interface | Description | VRF | IP Address |
 | --------- | ----------- | --- | ---------- |
-| Loopback0 | ROUTER_ID | default | 100.64.255.2/32 |
+| Loopback0 | ROUTER_ID | default | 100.64.255.1/32 |
 
 ##### IPv6
 
@@ -309,7 +309,7 @@ interface Ethernet4
 interface Loopback0
    description ROUTER_ID
    no shutdown
-   ip address 100.64.255.2/32
+   ip address 100.64.255.1/32
 ```
 
 ## Routing
@@ -372,7 +372,7 @@ ASN Notation: asplain
 
 | BGP AS | Router ID |
 | ------ | --------- |
-| 65100 | 100.64.255.2 |
+| 65100 | 100.64.255.1 |
 
 | BGP Tuning |
 | ---------- |
@@ -405,10 +405,10 @@ ASN Notation: asplain
 
 | Neighbor | Remote AS | VRF | Shutdown | Send-community | Maximum-routes | Maximum-accepted-routes | Maximum-advertised-routes | Allowas-in | BFD | RIB Pre-Policy Retain | Route-Reflector Client | Passive | TTL Max Hops |
 | -------- | --------- | --- | -------- | -------------- | -------------- | ----------------------- | ------------------------- | ---------- | --- | --------------------- | ---------------------- | ------- | ------------ |
-| 100.65.0.3 | 65101 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
-| 100.65.0.7 | 65101 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
-| 100.65.0.11 | 65102 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
-| 100.65.0.15 | 65102 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
+| 100.65.0.1 | 65101 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
+| 100.65.0.5 | 65101 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
+| 100.65.0.9 | 65102 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
+| 100.65.0.13 | 65102 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
 | 100.65.255.3 | 65101 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
 | 100.65.255.4 | 65101 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
 | 100.65.255.5 | 65102 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
@@ -427,7 +427,7 @@ ASN Notation: asplain
 ```eos
 !
 router bgp 65100
-   router-id 100.64.255.2
+   router-id 100.64.255.1
    no bgp default ipv4-unicast
    maximum-paths 4
    neighbor EVPN-OVERLAY-PEERS peer group
@@ -440,30 +440,30 @@ router bgp 65100
    neighbor IPv4-UNDERLAY-PEERS peer group
    neighbor IPv4-UNDERLAY-PEERS send-community
    neighbor IPv4-UNDERLAY-PEERS maximum-routes 256000
-   neighbor 100.65.0.3 peer group IPv4-UNDERLAY-PEERS
-   neighbor 100.65.0.3 remote-as 65101
-   neighbor 100.65.0.3 description l01_Ethernet2
-   neighbor 100.65.0.7 peer group IPv4-UNDERLAY-PEERS
-   neighbor 100.65.0.7 remote-as 65101
-   neighbor 100.65.0.7 description l02_Ethernet2
-   neighbor 100.65.0.11 peer group IPv4-UNDERLAY-PEERS
-   neighbor 100.65.0.11 remote-as 65102
-   neighbor 100.65.0.11 description l03_Ethernet2
-   neighbor 100.65.0.15 peer group IPv4-UNDERLAY-PEERS
-   neighbor 100.65.0.15 remote-as 65102
-   neighbor 100.65.0.15 description l04_Ethernet2
+   neighbor 100.65.0.1 peer group IPv4-UNDERLAY-PEERS
+   neighbor 100.65.0.1 remote-as 65101
+   neighbor 100.65.0.1 description marpla-l01_Ethernet1
+   neighbor 100.65.0.5 peer group IPv4-UNDERLAY-PEERS
+   neighbor 100.65.0.5 remote-as 65101
+   neighbor 100.65.0.5 description marpla-l02_Ethernet1
+   neighbor 100.65.0.9 peer group IPv4-UNDERLAY-PEERS
+   neighbor 100.65.0.9 remote-as 65102
+   neighbor 100.65.0.9 description marpla-l03_Ethernet1
+   neighbor 100.65.0.13 peer group IPv4-UNDERLAY-PEERS
+   neighbor 100.65.0.13 remote-as 65102
+   neighbor 100.65.0.13 description marpla-l04_Ethernet1
    neighbor 100.65.255.3 peer group EVPN-OVERLAY-PEERS
    neighbor 100.65.255.3 remote-as 65101
-   neighbor 100.65.255.3 description l01_Loopback0
+   neighbor 100.65.255.3 description marpla-l01_Loopback0
    neighbor 100.65.255.4 peer group EVPN-OVERLAY-PEERS
    neighbor 100.65.255.4 remote-as 65101
-   neighbor 100.65.255.4 description l02_Loopback0
+   neighbor 100.65.255.4 description marpla-l02_Loopback0
    neighbor 100.65.255.5 peer group EVPN-OVERLAY-PEERS
    neighbor 100.65.255.5 remote-as 65102
-   neighbor 100.65.255.5 description l03_Loopback0
+   neighbor 100.65.255.5 description marpla-l03_Loopback0
    neighbor 100.65.255.6 peer group EVPN-OVERLAY-PEERS
    neighbor 100.65.255.6 remote-as 65102
-   neighbor 100.65.255.6 description l04_Loopback0
+   neighbor 100.65.255.6 description marpla-l04_Loopback0
    redistribute connected route-map RM-CONN-2-BGP
    !
    address-family evpn

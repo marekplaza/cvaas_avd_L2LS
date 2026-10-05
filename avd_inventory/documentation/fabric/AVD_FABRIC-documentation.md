@@ -17,12 +17,12 @@
 
 | POD | Type | Node | Management IP | Platform | Provisioned in CloudVision | Serial Number |
 | --- | ---- | ---- | ------------- | -------- | -------------------------- | ------------- |
-| marpla_POD1 | l3leaf | l01 | 10.0.2.1/16 | cEOS | Provisioned | - |
-| marpla_POD1 | l3leaf | l02 | 10.0.2.2/16 | cEOS | Provisioned | - |
-| marpla_POD1 | l3leaf | l03 | 10.0.2.3/16 | cEOS | Provisioned | - |
-| marpla_POD1 | l3leaf | l04 | 10.0.2.4/16 | cEOS | Provisioned | - |
-| marpla_POD1 | spine | s01 | 10.0.1.1/16 | cEOS | Provisioned | - |
-| marpla_POD1 | spine | s02 | 10.0.1.2/16 | cEOS | Provisioned | - |
+| marpla-POD1 | l3leaf | marpla-l01 | 10.0.2.1/16 | cEOS | Provisioned | - |
+| marpla-POD1 | l3leaf | marpla-l02 | 10.0.2.2/16 | cEOS | Provisioned | - |
+| marpla-POD1 | l3leaf | marpla-l03 | 10.0.2.3/16 | cEOS | Provisioned | - |
+| marpla-POD1 | l3leaf | marpla-l04 | 10.0.2.4/16 | cEOS | Provisioned | - |
+| marpla-POD1 | spine | marpla-s01 | 10.0.1.1/16 | cEOS | Provisioned | - |
+| marpla-POD1 | spine | marpla-s02 | 10.0.1.2/16 | cEOS | Provisioned | - |
 
 > Provision status is based on Ansible inventory declaration and do not represent real status from CloudVision.
 
@@ -35,18 +35,18 @@
 
 | Type | Node | Node Interface | Peer Type | Peer Node | Peer Interface |
 | ---- | ---- | -------------- | --------- | --------- | -------------- |
-| l3leaf | l01 | Ethernet1 | spine | s01 | Ethernet1 |
-| l3leaf | l01 | Ethernet2 | spine | s02 | Ethernet1 |
-| l3leaf | l01 | Ethernet3 | mlag_peer | l02 | Ethernet3 |
-| l3leaf | l01 | Ethernet4 | mlag_peer | l02 | Ethernet4 |
-| l3leaf | l02 | Ethernet1 | spine | s01 | Ethernet2 |
-| l3leaf | l02 | Ethernet2 | spine | s02 | Ethernet2 |
-| l3leaf | l03 | Ethernet1 | spine | s01 | Ethernet3 |
-| l3leaf | l03 | Ethernet2 | spine | s02 | Ethernet3 |
-| l3leaf | l03 | Ethernet3 | mlag_peer | l04 | Ethernet3 |
-| l3leaf | l03 | Ethernet4 | mlag_peer | l04 | Ethernet4 |
-| l3leaf | l04 | Ethernet1 | spine | s01 | Ethernet4 |
-| l3leaf | l04 | Ethernet2 | spine | s02 | Ethernet4 |
+| l3leaf | marpla-l01 | Ethernet1 | spine | marpla-s01 | Ethernet1 |
+| l3leaf | marpla-l01 | Ethernet2 | spine | marpla-s02 | Ethernet1 |
+| l3leaf | marpla-l01 | Ethernet3 | mlag_peer | marpla-l02 | Ethernet3 |
+| l3leaf | marpla-l01 | Ethernet4 | mlag_peer | marpla-l02 | Ethernet4 |
+| l3leaf | marpla-l02 | Ethernet1 | spine | marpla-s01 | Ethernet2 |
+| l3leaf | marpla-l02 | Ethernet2 | spine | marpla-s02 | Ethernet2 |
+| l3leaf | marpla-l03 | Ethernet1 | spine | marpla-s01 | Ethernet3 |
+| l3leaf | marpla-l03 | Ethernet2 | spine | marpla-s02 | Ethernet3 |
+| l3leaf | marpla-l03 | Ethernet3 | mlag_peer | marpla-l04 | Ethernet3 |
+| l3leaf | marpla-l03 | Ethernet4 | mlag_peer | marpla-l04 | Ethernet4 |
+| l3leaf | marpla-l04 | Ethernet1 | spine | marpla-s01 | Ethernet4 |
+| l3leaf | marpla-l04 | Ethernet2 | spine | marpla-s02 | Ethernet4 |
 
 ## Fabric IP Allocation
 
@@ -60,14 +60,14 @@
 
 | Node | Node Interface | Node IP Address | Peer Node | Peer Interface | Peer IP Address |
 | ---- | -------------- | --------------- | --------- | -------------- | --------------- |
-| l01 | Ethernet1 | 100.65.0.1/31 | s01 | Ethernet1 | 100.65.0.0/31 |
-| l01 | Ethernet2 | 100.65.0.3/31 | s02 | Ethernet1 | 100.65.0.2/31 |
-| l02 | Ethernet1 | 100.65.0.5/31 | s01 | Ethernet2 | 100.65.0.4/31 |
-| l02 | Ethernet2 | 100.65.0.7/31 | s02 | Ethernet2 | 100.65.0.6/31 |
-| l03 | Ethernet1 | 100.65.0.9/31 | s01 | Ethernet3 | 100.65.0.8/31 |
-| l03 | Ethernet2 | 100.65.0.11/31 | s02 | Ethernet3 | 100.65.0.10/31 |
-| l04 | Ethernet1 | 100.65.0.13/31 | s01 | Ethernet4 | 100.65.0.12/31 |
-| l04 | Ethernet2 | 100.65.0.15/31 | s02 | Ethernet4 | 100.65.0.14/31 |
+| marpla-l01 | Ethernet1 | 100.65.0.1/31 | marpla-s01 | Ethernet1 | 100.65.0.0/31 |
+| marpla-l01 | Ethernet2 | 100.65.0.3/31 | marpla-s02 | Ethernet1 | 100.65.0.2/31 |
+| marpla-l02 | Ethernet1 | 100.65.0.5/31 | marpla-s01 | Ethernet2 | 100.65.0.4/31 |
+| marpla-l02 | Ethernet2 | 100.65.0.7/31 | marpla-s02 | Ethernet2 | 100.65.0.6/31 |
+| marpla-l03 | Ethernet1 | 100.65.0.9/31 | marpla-s01 | Ethernet3 | 100.65.0.8/31 |
+| marpla-l03 | Ethernet2 | 100.65.0.11/31 | marpla-s02 | Ethernet3 | 100.65.0.10/31 |
+| marpla-l04 | Ethernet1 | 100.65.0.13/31 | marpla-s01 | Ethernet4 | 100.65.0.12/31 |
+| marpla-l04 | Ethernet2 | 100.65.0.15/31 | marpla-s02 | Ethernet4 | 100.65.0.14/31 |
 
 ### Loopback Interfaces (BGP EVPN Peering)
 
@@ -80,12 +80,12 @@
 
 | POD | Node | Loopback0 |
 | --- | ---- | --------- |
-| marpla_POD1 | l01 | 100.65.255.3/32 |
-| marpla_POD1 | l02 | 100.65.255.4/32 |
-| marpla_POD1 | l03 | 100.65.255.5/32 |
-| marpla_POD1 | l04 | 100.65.255.6/32 |
-| marpla_POD1 | s01 | 100.64.255.1/32 |
-| marpla_POD1 | s02 | 100.64.255.2/32 |
+| marpla-POD1 | marpla-l01 | 100.65.255.3/32 |
+| marpla-POD1 | marpla-l02 | 100.65.255.4/32 |
+| marpla-POD1 | marpla-l03 | 100.65.255.5/32 |
+| marpla-POD1 | marpla-l04 | 100.65.255.6/32 |
+| marpla-POD1 | marpla-s01 | 100.64.255.1/32 |
+| marpla-POD1 | marpla-s02 | 100.64.255.2/32 |
 
 ### VTEP Loopback VXLAN Tunnel Source Interfaces (VTEPs Only)
 
@@ -97,7 +97,7 @@
 
 | POD | Node | Loopback1 |
 | --- | ---- | --------- |
-| marpla_POD1 | l01 | 100.65.254.3/32 |
-| marpla_POD1 | l02 | 100.65.254.3/32 |
-| marpla_POD1 | l03 | 100.65.254.5/32 |
-| marpla_POD1 | l04 | 100.65.254.5/32 |
+| marpla-POD1 | marpla-l01 | 100.65.254.3/32 |
+| marpla-POD1 | marpla-l02 | 100.65.254.3/32 |
+| marpla-POD1 | marpla-l03 | 100.65.254.5/32 |
+| marpla-POD1 | marpla-l04 | 100.65.254.5/32 |

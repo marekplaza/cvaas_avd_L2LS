@@ -15,14 +15,14 @@ Sieć składa się z 8 węzłów cEOS-lab:
 
 | Hostname | Rola | OS | Management IP |
 |----------|------|----|---------------|
-| s01 | Spine | cEOS-lab 4.34.2F | 10.0.1.1 |
-| s02 | Spine | cEOS-lab 4.34.2F | 10.0.1.2 |
-| l01 | L3Leaf (pod0, MLAG) | cEOS-lab 4.34.2F | 10.0.2.1 |
-| l02 | L3Leaf (pod0, MLAG) | cEOS-lab 4.34.2F | 10.0.2.2 |
-| l03 | L3Leaf (pod1, MLAG) | cEOS-lab 4.34.2F | 10.0.2.3 |
-| l04 | L3Leaf (pod1, MLAG) | cEOS-lab 4.34.2F | 10.0.2.4 |
-| h01 | Host | cEOS-lab 4.34.2F | 10.0.3.1 |
-| h02 | Host | cEOS-lab 4.34.2F | 10.0.3.2 |
+| marpla-s01 | Spine | cEOS-lab 4.34.2F | 10.0.1.1 |
+| marpla-s02 | Spine | cEOS-lab 4.34.2F | 10.0.1.2 |
+| marpla-l01 | L3Leaf (pod0, MLAG) | cEOS-lab 4.34.2F | 10.0.2.1 |
+| marpla-l02 | L3Leaf (pod0, MLAG) | cEOS-lab 4.34.2F | 10.0.2.2 |
+| marpla-l03 | L3Leaf (pod1, MLAG) | cEOS-lab 4.34.2F | 10.0.2.3 |
+| marpla-l04 | L3Leaf (pod1, MLAG) | cEOS-lab 4.34.2F | 10.0.2.4 |
+| marpla-h01 | Host | cEOS-lab 4.34.2F | 10.0.3.1 |
+| marpla-h02 | Host | cEOS-lab 4.34.2F | 10.0.3.2 |
 
 Sieć szkieletowa: **EVPN MLAG**, dwie pary leaf-ów w MLAG peer-link, uplinki do dwóch spine-ów (eBGP underlay + EVPN overlay).
 

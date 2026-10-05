@@ -1,4 +1,4 @@
-# l01
+# marpla-l01
 
 ## Table of Contents
 
@@ -250,8 +250,8 @@ daemon TerminAttr
 
 | Host Name | Description | IPv4 Address | ICMP Echo Size | Probing Interface Set | Address Only | URL |
 | --------- | ----------- | ------------ | -------------- | --------------------- | ------------ | --- |
-| h01 | - | 10.100.100.101 | - | - | True | - |
-| h02 | - | 10.200.200.202 | - | - | True | - |
+| marpla-h01 | - | 10.100.100.101 | - | - | True | - |
+| marpla-h02 | - | 10.200.200.202 | - | - | True | - |
 
 ### Monitor Connectivity Device Configuration
 
@@ -264,10 +264,10 @@ monitor connectivity
       interface set IF_SET Loopback101
       local-interfaces IF_SET address-only default
       !
-      host h01
+      host marpla-h01
          ip 10.100.100.101
       !
-      host h02
+      host marpla-h02
          ip 10.200.200.202
 ```
 
@@ -375,9 +375,9 @@ vlan 4094
 
 | Interface | Description | Mode | VLANs | Native VLAN | Trunk Group | Channel-Group |
 | --------- | ----------- | ---- | ----- | ----------- | ----------- | ------------- |
-| Ethernet3 | MLAG_l02_Ethernet3 | *trunk | *- | *- | *MLAG | 3 |
-| Ethernet4 | MLAG_l02_Ethernet4 | *trunk | *- | *- | *MLAG | 3 |
-| Ethernet10 | SERVER_h01 | *trunk | *100 | *- | *- | 10 |
+| Ethernet3 | MLAG_marpla-l02_Ethernet3 | *trunk | *- | *- | *MLAG | 3 |
+| Ethernet4 | MLAG_marpla-l02_Ethernet4 | *trunk | *- | *- | *MLAG | 3 |
+| Ethernet10 | SERVER_marpla-h01 | *trunk | *100 | *- | *- | 10 |
 
 *Inherited from Port-Channel Interface
 
@@ -385,39 +385,39 @@ vlan 4094
 
 | Interface | Description | Channel Group | IP Address | VRF | MTU | Shutdown | ACL In | ACL Out |
 | --------- | ----------- | ------------- | ---------- | --- | --- | -------- | ------ | ------- |
-| Ethernet1 | P2P_s01_Ethernet1 | - | 100.65.0.1/31 | default | 9214 | False | - | - |
-| Ethernet2 | P2P_s02_Ethernet1 | - | 100.65.0.3/31 | default | 9214 | False | - | - |
+| Ethernet1 | P2P_marpla-s01_Ethernet1 | - | 100.65.0.1/31 | default | 9214 | False | - | - |
+| Ethernet2 | P2P_marpla-s02_Ethernet1 | - | 100.65.0.3/31 | default | 9214 | False | - | - |
 
 #### Ethernet Interfaces Device Configuration
 
 ```eos
 !
 interface Ethernet1
-   description P2P_s01_Ethernet1
+   description P2P_marpla-s01_Ethernet1
    no shutdown
    mtu 9214
    no switchport
    ip address 100.65.0.1/31
 !
 interface Ethernet2
-   description P2P_s02_Ethernet1
+   description P2P_marpla-s02_Ethernet1
    no shutdown
    mtu 9214
    no switchport
    ip address 100.65.0.3/31
 !
 interface Ethernet3
-   description MLAG_l02_Ethernet3
+   description MLAG_marpla-l02_Ethernet3
    no shutdown
    channel-group 3 mode active
 !
 interface Ethernet4
-   description MLAG_l02_Ethernet4
+   description MLAG_marpla-l02_Ethernet4
    no shutdown
    channel-group 3 mode active
 !
 interface Ethernet10
-   description SERVER_h01
+   description SERVER_marpla-h01
    no shutdown
    channel-group 10 mode active
 ```
@@ -430,22 +430,22 @@ interface Ethernet10
 
 | Interface | Description | Mode | VLANs | Native VLAN | Trunk Group | LACP Fallback Timeout | LACP Fallback Mode | MLAG ID | EVPN ESI |
 | --------- | ----------- | ---- | ----- | ----------- | ----------- | --------------------- | ------------------ | ------- | -------- |
-| Port-Channel3 | MLAG_l02_Port-Channel3 | trunk | - | - | MLAG | - | - | - | - |
-| Port-Channel10 | SERVER_h01 | trunk | 100 | - | - | - | - | 10 | - |
+| Port-Channel3 | MLAG_marpla-l02_Port-Channel3 | trunk | - | - | MLAG | - | - | - | - |
+| Port-Channel10 | SERVER_marpla-h01 | trunk | 100 | - | - | - | - | 10 | - |
 
 #### Port-Channel Interfaces Device Configuration
 
 ```eos
 !
 interface Port-Channel3
-   description MLAG_l02_Port-Channel3
+   description MLAG_marpla-l02_Port-Channel3
    no shutdown
    switchport mode trunk
    switchport trunk group MLAG
    switchport
 !
 interface Port-Channel10
-   description SERVER_h01
+   description SERVER_marpla-h01
    no shutdown
    switchport trunk allowed vlan 100
    switchport mode trunk
@@ -572,7 +572,7 @@ interface Vlan4094
 ```eos
 !
 interface Vxlan1
-   description l01_VTEP
+   description marpla-l01_VTEP
    vxlan source-interface Loopback1
    vxlan virtual-router encapsulation mac-address mlag-system-id
    vxlan udp-port 4789
@@ -745,24 +745,24 @@ router bgp 65101
    neighbor MLAG-IPv4-UNDERLAY-PEER peer group
    neighbor MLAG-IPv4-UNDERLAY-PEER remote-as 65101
    neighbor MLAG-IPv4-UNDERLAY-PEER next-hop-self
-   neighbor MLAG-IPv4-UNDERLAY-PEER description l02
+   neighbor MLAG-IPv4-UNDERLAY-PEER description marpla-l02
    neighbor MLAG-IPv4-UNDERLAY-PEER route-map RM-MLAG-PEER-IN in
    neighbor MLAG-IPv4-UNDERLAY-PEER send-community
    neighbor MLAG-IPv4-UNDERLAY-PEER maximum-routes 256000
    neighbor 100.64.255.1 peer group EVPN-OVERLAY-PEERS
    neighbor 100.64.255.1 remote-as 65100
-   neighbor 100.64.255.1 description s01_Loopback0
+   neighbor 100.64.255.1 description marpla-s01_Loopback0
    neighbor 100.64.255.2 peer group EVPN-OVERLAY-PEERS
    neighbor 100.64.255.2 remote-as 65100
-   neighbor 100.64.255.2 description s02_Loopback0
+   neighbor 100.64.255.2 description marpla-s02_Loopback0
    neighbor 100.65.0.0 peer group IPv4-UNDERLAY-PEERS
    neighbor 100.65.0.0 remote-as 65100
-   neighbor 100.65.0.0 description s01_Ethernet1
+   neighbor 100.65.0.0 description marpla-s01_Ethernet1
    neighbor 100.65.0.2 peer group IPv4-UNDERLAY-PEERS
    neighbor 100.65.0.2 remote-as 65100
-   neighbor 100.65.0.2 description s02_Ethernet1
+   neighbor 100.65.0.2 description marpla-s02_Ethernet1
    neighbor 100.65.2.1 peer group MLAG-IPv4-UNDERLAY-PEER
-   neighbor 100.65.2.1 description l02_Vlan4093
+   neighbor 100.65.2.1 description marpla-l02_Vlan4093
    redistribute connected route-map RM-CONN-2-BGP
    !
    vlan 100
@@ -784,7 +784,7 @@ router bgp 65101
       route-target export evpn 1:1
       router-id 100.65.255.3
       neighbor 100.65.2.1 peer group MLAG-IPv4-UNDERLAY-PEER
-      neighbor 100.65.2.1 description l02_Vlan3000
+      neighbor 100.65.2.1 description marpla-l02_Vlan3000
       redistribute connected route-map RM-CONN-2-BGP-VRFS
 ```
 
