@@ -1,5 +1,5 @@
 ---
-name: CVaaS and AVD Demo, EVPN MLAG
+name: CVaaS and AVD Demo, EVPN MLAG small
 prefix: ""
 
 mgmt:
@@ -13,15 +13,11 @@ topology:
             image: arista/ceos:latest
             binds:
             - interface_mapping.json:/mnt/flash/EosIntfMapping.json:ro
+            # extras.ceos-copy-to-flash under defaults is not applied by containerlab 0.76,
+            # so the onboarding token is bind-mounted instead
+            - cv-onboarding-token:/mnt/flash/cv-onboarding-token:ro
     defaults:
         kind: ceos
-        extras:
-            ceos-copy-to-flash:
-            - cv-onboarding-token
-        # an alternative to ceos-copy-to-flash could be bind
-        # keeping the bind settings here just in case
-        # binds:
-        #   - cv-onboarding-token:/mnt/flash/cv-onboarding-token:ro
     nodes:
         s01:
             mgmt-ipv4: 10.0.1.1
