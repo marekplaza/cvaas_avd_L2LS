@@ -8,22 +8,22 @@
     ansible_password: "{{ lookup('ansible.builtin.env', 'CV_API_TOKEN') }}"
     devices_to_decommission:
       - hostname: s01
-        serialNumber: 1C68470A1E0CD6EF7418D78A9582A422
+        serialNumber: CAFECAFECAFE0001
         parentContainerName: s01
       - hostname: s02
-        serialNumber: 1C68470A1E0CD6EF7418D78A9582025C
+        serialNumber: CAFECAFECAFE0002
         parentContainerName: s02
       - hostname: l01
-        serialNumber: 1C68470A1E0CD6EF7418D78A95825672
+        serialNumber: CAFECAFECAFE0011
         parentContainerName: l01
       - hostname: l02
-        serialNumber: 1C68470A1E0CD6EF7418D78A9582DD32
+        serialNumber: CAFECAFECAFE0012
         parentContainerName: l02
       - hostname: l03
-        serialNumber: 1C68470A1E0CD6EF7418D78A95820CFB
+        serialNumber: CAFECAFECAFE0013
         parentContainerName: l03
       - hostname: l04
-        serialNumber: 1C68470A1E0CD6EF7418D78A95820220
+        serialNumber: CAFECAFECAFE0014
         parentContainerName: l04
   tasks:
 
