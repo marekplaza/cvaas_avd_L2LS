@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
-"""Generate the ANTA catalog with the dual-DC BGP / EVPN / DCI tests.
+"""Generate the ANTA catalog with the dual-DC multi-domain BGP / EVPN / DCI tests.
 
 Expected values (peers, loopbacks, VTEPs, VNIs) are taken from the AVD
 structured configs, so run it after `make build`. Every test is limited to one
 device with an ANTA tag equal to the hostname.
 
+Multi-domain (variant A): every zone's MLAG leaf pair is the EVPN gateway of
+that zone; spines are EVPN route servers and DCI underlay transit only.
+
 What is verified:
-  gateways (spines)
-    - all BGP sessions up: leaf underlay, leaf EVPN, DCI underlay, EVPN core
-    - BGP peer count per address family
-    - DCI peers use the DCI route-maps, leaf peers get RM-UNDERLAY-TO-LEAFS
-    - DCI underlay exchanges exactly the gateway loopbacks (Lo0 + VTEP)
-    - VTEP peers = local leaf pairs + remote gateways
-    - only DCI VNIs are configured on the gateway
-    - EVPN type-5 routes for the DC-local subnets of both DCs
   all devices
-    - RT Constraint: rt-membership sessions with every EVPN peer
-  leafs
-    - all BGP sessions up and peer counts
+    - all BGP sessions up; peer count for EVPN, rt-membership (RTC) and IPv4
+  spines (route servers + DCI transit)
+    - DCI peers use the DCI route-maps
+    - DCI underlay exchanges the leaf loopbacks (Lo0 + VTEP) of both DCs
+  leafs (zone gateways)
+    - EVPN-OVERLAY-CORE peers are exactly the same zone's leaf pair in the other DC
+      (part of the session/peer-count tests: 2 route servers + 2 remote zone peers)
+    - VTEP peers = only the same zone's leaf pair in the other DC
+    - zone VNIs only
     - RT Constraint: the BGP EVPN table holds only routes with an RT of the leaf's zone
       (custom test marpla_tests.VerifyEVPNRoutesMatchImportedRT)
-    - VTEP peers = only the local gateways (no tunnels to the other DC)
-    - zone VNIs only
     - EVPN type-5 route for the same zone's subnet that is local to the other DC
   traffic (needs `make fw_test` first so the firewalls' ARP/MAC are learned)
     - EVPN type-2 route of the remote firewall node on the stretched VLAN
@@ -90,15 +89,6 @@ def main() -> None:
     devices = load()
     spines = {h: c for h, c in devices.items() if h.split("-")[3].startswith("s")}  # marpla-dc-<n>-sNN
     leafs = {h: c for h, c in devices.items() if h not in spines}
-
-    # Interface IP -> gateway hostname: resolves which gateway sits behind a DCI peer address
-    owner_of_ip = {}
-    for h, c in spines.items():
-        for e in c.get("ethernet_interfaces", []):
-            if e.get("ip_address"):
-                owner_of_ip[e["ip_address"].split("/")[0]] = h
-
-    vtep_ip = {h: loopback(c, "Loopback1") for h, c in devices.items()}
     tests: dict[str, list] = defaultdict(list)
 
     def add(module: str, test: str, host: str, inputs: dict) -> None:
@@ -119,42 +109,27 @@ def main() -> None:
                 {"afi": "rt-membership", "num_peers": len(evpn)},
                 {"afi": "ipv4", "safi": "unicast", "vrf": "default", "num_peers": len(ipv4)},
             ]})
-        add("anta.tests.vxlan", "VerifyVxlanVniBinding", h, {"bindings": bindings(c)})
 
     for h, c in spines.items():
         dc = dc_of(h)
         dci = [n for n in neighbors(c) if n.get("description", "").startswith("DCI_")]
-        leaf_peers = [n for n in neighbors(c) if n.get("peer_group") == "IPv4-UNDERLAY-PEERS"]
         add("anta.tests.routing.bgp", "VerifyBgpRouteMaps", h, {"bgp_peers": [
-            *({"peer_address": n["ip_address"], "vrf": "default",
-               "inbound_route_map": n["route_map_in"], "outbound_route_map": n["route_map_out"]} for n in dci),
-            *({"peer_address": n["ip_address"], "vrf": "default",
-               "outbound_route_map": "RM-UNDERLAY-TO-LEAFS"} for n in leaf_peers),
-        ]})
-        own = [loopback(c, "Loopback0") + "/32", vtep_ip[h] + "/32"]
-        add("anta.tests.routing.bgp", "VerifyBGPExchangedRoutes", h, {"bgp_peers": [
             {"peer_address": n["ip_address"], "vrf": "default",
-             "advertised_routes": own,
-             "received_routes": [loopback(spines[owner_of_ip[n["ip_address"]]], "Loopback0") + "/32",
-                                 vtep_ip[owner_of_ip[n["ip_address"]]] + "/32"]}
+             "inbound_route_map": n["route_map_in"], "outbound_route_map": n["route_map_out"]} for n in dci]})
+        local = sorted({f"{loopback(c2, n)}/32" for l, c2 in leafs.items() if dc_of(l) == dc for n in ("Loopback0", "Loopback1")})
+        remote = sorted({f"{loopback(c2, n)}/32" for l, c2 in leafs.items() if dc_of(l) != dc for n in ("Loopback0", "Loopback1")})
+        # check_active: False - each loopback arrives over both DCI links (ECMP); only one path is "best"
+        add("anta.tests.routing.bgp", "VerifyBGPExchangedRoutes", h, {"check_active": False, "bgp_peers": [
+            {"peer_address": n["ip_address"], "vrf": "default", "advertised_routes": local, "received_routes": remote}
             for n in dci]})
-        local_leaf_vteps = {vtep_ip[l] for l in leafs if dc_of(l) == dc}
-        remote_gws = {vtep_ip[s] for s in spines if dc_of(s) != dc}
-        add("anta.tests.vxlan", "VerifyVxlanVtep", h, {"vteps": sorted(local_leaf_vteps | remote_gws)})
-        add("anta.tests.evpn", "VerifyEVPNType5Routes", h, {"prefixes": [
-            {"address": f"10.{octet}.2{d}.0/24", "vni": vrf_vni(c, zone.upper())}
-            for zone, (_, octet) in ZONES.items() for d in (1, 2)]})
-        add("anta.tests.routing.bgp", "VerifyEVPNType2Route", h, {"vxlan_endpoints": [
-            {"address": f"10.{octet}.10.{FW_HOST_OCTET[d]}", "vni": c_vni}
-            for zone, (vlan, octet) in ZONES.items()
-            for c_vni in [next(v["vni"] for v in vxlan(c)["vlans"] if v["id"] == vlan)]
-            for d in (1, 2)]})
 
+    vtep_ip = {h: loopback(c, "Loopback1") for h, c in leafs.items()}
     for h, c in leafs.items():
         dc, zone = dc_of(h), zone_of(h)
         vlan, octet = ZONES[zone]
-        local_gws = {vtep_ip[s] for s in spines if dc_of(s) == dc}
-        add("anta.tests.vxlan", "VerifyVxlanVtep", h, {"vteps": sorted(local_gws)})
+        remote_pair = {vtep_ip[l] for l in leafs if dc_of(l) != dc and zone_of(l) == zone}
+        add("anta.tests.vxlan", "VerifyVxlanVtep", h, {"vteps": sorted(remote_pair)})
+        add("anta.tests.vxlan", "VerifyVxlanVniBinding", h, {"bindings": bindings(c)})
         add("anta.tests.evpn", "VerifyEVPNType5Routes", h, {"prefixes": [
             {"address": f"10.{octet}.2{3 - dc}.0/24", "vni": vrf_vni(c, zone.upper())}]})
         bgp = c["router_bgp"]

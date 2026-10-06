@@ -1,6 +1,11 @@
 ---
 # DC1 - own underlay (eBGP, AS 651xx) and own overlay (eBGP EVPN).
-# Spines are EVPN gateways (domain remote) towards DC2.
+# Multi-domain (variant A): every security zone is its own EVPN domain. The zone's
+# MLAG leaf pair is the EVPN gateway (domain remote) and peers EVPN multihop only
+# with the same zone's leaf pair in DC2. Spines are route servers + DCI transit.
+# No D-path: AVD renders it only with all-active multihoming (not with MLAG) and
+# it is not needed - a route re-originated back into the local domain is dropped
+# by the MLAG peer of the gateway pair (same AS in the AS path).
 fabric_name: MARPLA_DC1
 dc_name: marpla-DC1
 pod_name: marpla-DC1-POD1
@@ -8,55 +13,8 @@ pod_name: marpla-DC1-POD1
 spine:
   defaults:
     platform: cEOS
-    # Gateways are standalone (all-active multihoming does not support MLAG)
-    mlag: false
     bgp_as: 65100
     loopback_ipv4_pool: 10.101.0.0/24
-    vtep_loopback_ipv4_pool: 10.101.3.0/24
-    # Same anycast gateway MAC in both DCs
-    virtual_router_mac_address: 00:1c:73:00:dc:99
-    # Gateways only carry the VNIs selected for DCI
-    filter:
-      tags: [dci]
-    # Keep the other DC's gateway loopbacks (learned over DCI) on the gateways:
-    # leafs only ever need to reach their local gateways.
-    structured_config:
-      router_bgp:
-        peer_groups:
-          - name: IPv4-UNDERLAY-PEERS
-            route_map_out: RM-UNDERLAY-TO-LEAFS
-      route_maps:
-        - name: RM-UNDERLAY-TO-LEAFS
-          sequence_numbers:
-            - sequence: 10
-              type: deny
-              description: remote DC gateway loopbacks stay on the gateways
-              match:
-                - ip address prefix-list PL-DCI-IN
-            - sequence: 20
-              type: permit
-    evpn_gateway:
-      remote_peers:
-        - hostname: marpla-dc-2-s01
-          ip_address: 10.102.0.1
-          bgp_as: "65200"
-        - hostname: marpla-dc-2-s02
-          ip_address: 10.102.0.2
-          bgp_as: "65200"
-      evpn_l2:
-        enabled: true
-      evpn_l3:
-        enabled: true
-        inter_domain: true
-      d_path:
-        local_domain_id: "65100:1"
-        remote_domain_id: "65200:2"
-      # Both DC1 gateways act as one all-active (I-ESI) multihomed gateway
-      all_active_multihoming:
-        enabled: true
-        evpn_ethernet_segment:
-          identifier: "0000:0000:0001:0001:0001"
-          rt_import: "00:00:00:01:00:01"
   nodes:
     - name: marpla-dc-1-s01
       id: 1
@@ -68,11 +26,11 @@ spine:
           peer_interface: Ethernet7
           ip_address: 10.100.0.0/31
           peer_ip: 10.100.0.1
-          bgp: &dci_bgp
+          bgp:
             peer_as: "65200"
             ipv4_prefix_list_in: PL-DCI-IN
             ipv4_prefix_list_out: PL-DCI-OUT
-          structured_config: &dci_mtu
+          structured_config:
             mtu: 9214
         - name: Ethernet8
           description: DCI_marpla-dc-2-s02_Ethernet8
@@ -80,8 +38,12 @@ spine:
           peer_interface: Ethernet8
           ip_address: 10.100.0.2/31
           peer_ip: 10.100.0.3
-          bgp: *dci_bgp
-          structured_config: *dci_mtu
+          bgp:
+            peer_as: "65200"
+            ipv4_prefix_list_in: PL-DCI-IN
+            ipv4_prefix_list_out: PL-DCI-OUT
+          structured_config:
+            mtu: 9214
     - name: marpla-dc-1-s02
       id: 2
       mgmt_ip: 10.30.11.2/16
@@ -92,31 +54,40 @@ spine:
           peer_interface: Ethernet7
           ip_address: 10.100.0.4/31
           peer_ip: 10.100.0.5
-          bgp: *dci_bgp
-          structured_config: *dci_mtu
+          bgp:
+            peer_as: "65200"
+            ipv4_prefix_list_in: PL-DCI-IN
+            ipv4_prefix_list_out: PL-DCI-OUT
+          structured_config:
+            mtu: 9214
         - name: Ethernet8
           description: DCI_marpla-dc-2-s01_Ethernet8
           peer: marpla-dc-2-s01
           peer_interface: Ethernet8
           ip_address: 10.100.0.6/31
           peer_ip: 10.100.0.7
-          bgp: *dci_bgp
-          structured_config: *dci_mtu
+          bgp:
+            peer_as: "65200"
+            ipv4_prefix_list_in: PL-DCI-IN
+            ipv4_prefix_list_out: PL-DCI-OUT
+          structured_config:
+            mtu: 9214
 
-# Underlay over DCI carries only the gateways' loopbacks (router-id + VTEP)
+# Underlay over DCI carries only the loopbacks the zone gateways need:
+# leaf Lo0 (EVPN multihop peering) and leaf VTEP Lo1 (VXLAN between zone pairs)
 ipv4_prefix_list_catalog:
   - name: PL-DCI-OUT
     sequence_numbers:
       - sequence: 10
-        action: permit 10.101.0.0/24 eq 32
+        action: permit 10.101.1.0/24 eq 32
       - sequence: 20
-        action: permit 10.101.3.0/24 eq 32
+        action: permit 10.101.2.0/24 eq 32
   - name: PL-DCI-IN
     sequence_numbers:
       - sequence: 10
-        action: permit 10.102.0.0/24 eq 32
+        action: permit 10.102.1.0/24 eq 32
       - sequence: 20
-        action: permit 10.102.3.0/24 eq 32
+        action: permit 10.102.2.0/24 eq 32
 
 l3leaf:
   defaults:
@@ -133,11 +104,53 @@ l3leaf:
     virtual_router_mac_address: 00:1c:73:00:dc:99
     spanning_tree_mode: mstp
     spanning_tree_priority: 16384
+    evpn_gateway:
+      evpn_l2:
+        enabled: true
+      evpn_l3:
+        enabled: true
+        inter_domain: true
+    # RT Constraint on a gateway must not relay RT memberships between its two
+    # domains: otherwise the remote route servers' default membership (0/0, from
+    # "default-route-target only") reaches the local route servers through this
+    # leaf and they send it the routes of every zone. The gateway therefore
+    # advertises only the memberships it originates itself (empty AS path) - the
+    # RTs of its own zone - to the route servers and to the remote gateways.
+    structured_config:
+      as_path:
+        access_lists:
+          - name: AS-RTC-LOCAL
+            entries:
+              - type: permit
+                match: "^$"
+      route_maps:
+        - name: RM-RTC-LOCAL-ONLY
+          sequence_numbers:
+            - sequence: 10
+              type: permit
+              description: only RT memberships originated by this gateway
+              match:
+                - as-path AS-RTC-LOCAL
   node_groups:
     - group: dc1-wew
       bgp_as: 65101
+      # address_family_rtc has no route-map key in AVD - applied as raw CLI
+      raw_eos_cli: |
+        router bgp 65101
+           address-family rt-membership
+              neighbor EVPN-OVERLAY-PEERS route-map RM-RTC-LOCAL-ONLY out
+              neighbor EVPN-OVERLAY-CORE route-map RM-RTC-LOCAL-ONLY out
       filter:
         tags: [wew, dc1-wew]
+      # Zone wew EVPN gateway: EVPN multihop only to the wew leaf pair in DC2
+      evpn_gateway:
+        remote_peers:
+          - hostname: marpla-dc-2-wew-l01
+            ip_address: 10.102.1.1
+            bgp_as: "65201"
+          - hostname: marpla-dc-2-wew-l02
+            ip_address: 10.102.1.2
+            bgp_as: "65201"
       nodes:
         - name: marpla-dc-1-wew-l01
           id: 1
@@ -149,8 +162,23 @@ l3leaf:
           uplink_switch_interfaces: [Ethernet2, Ethernet2]
     - group: dc1-priv
       bgp_as: 65102
+      # address_family_rtc has no route-map key in AVD - applied as raw CLI
+      raw_eos_cli: |
+        router bgp 65102
+           address-family rt-membership
+              neighbor EVPN-OVERLAY-PEERS route-map RM-RTC-LOCAL-ONLY out
+              neighbor EVPN-OVERLAY-CORE route-map RM-RTC-LOCAL-ONLY out
       filter:
         tags: [priv, dc1-priv]
+      # Zone priv EVPN gateway: EVPN multihop only to the priv leaf pair in DC2
+      evpn_gateway:
+        remote_peers:
+          - hostname: marpla-dc-2-priv-l03
+            ip_address: 10.102.1.3
+            bgp_as: "65202"
+          - hostname: marpla-dc-2-priv-l04
+            ip_address: 10.102.1.4
+            bgp_as: "65202"
       nodes:
         - name: marpla-dc-1-priv-l03
           id: 3
@@ -162,8 +190,23 @@ l3leaf:
           uplink_switch_interfaces: [Ethernet4, Ethernet4]
     - group: dc1-ext
       bgp_as: 65103
+      # address_family_rtc has no route-map key in AVD - applied as raw CLI
+      raw_eos_cli: |
+        router bgp 65103
+           address-family rt-membership
+              neighbor EVPN-OVERLAY-PEERS route-map RM-RTC-LOCAL-ONLY out
+              neighbor EVPN-OVERLAY-CORE route-map RM-RTC-LOCAL-ONLY out
       filter:
         tags: [ext, dc1-ext]
+      # Zone ext EVPN gateway: EVPN multihop only to the ext leaf pair in DC2
+      evpn_gateway:
+        remote_peers:
+          - hostname: marpla-dc-2-ext-l05
+            ip_address: 10.102.1.5
+            bgp_as: "65203"
+          - hostname: marpla-dc-2-ext-l06
+            ip_address: 10.102.1.6
+            bgp_as: "65203"
       nodes:
         - name: marpla-dc-1-ext-l05
           id: 5

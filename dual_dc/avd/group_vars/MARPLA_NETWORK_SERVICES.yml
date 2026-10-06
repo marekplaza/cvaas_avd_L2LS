@@ -7,9 +7,13 @@
 #
 # VLAN placement is driven by tags (a VLAN lands on a node when any tag matches):
 #   <zone>      -> zone leaf pairs in both DCs
-#   dci         -> EVPN gateways (spines): only these VNIs cross the DCI
+#   dci         -> stretched between DCs (marker only; the zone leaf pair is the gateway)
 #   dc1-<zone>  -> zone leaf pair in DC1 only (local, not stretched)
 #   dc2-<zone>  -> zone leaf pair in DC2 only (local, not stretched)
+#
+# Local VLANs set evpn_l2_multi_domain: false, so the zone gateway does not extend
+# them to the remote EVPN domain - only 110, 210, 310 and 399 cross the DCI in L2.
+# Their subnets still reach the other DC as type-5 routes (VRF inter-domain).
 #
 # mac_vrf_id_base: 0 keeps route distinguishers/targets at <x>:<VLAN ID>,
 # because a 7-digit VNI does not fit into an IP:number RD.
@@ -31,11 +35,13 @@ tenants:
           - id: 121
             name: EXT_DC1_LOCAL
             tags: [dc1-ext]
+            evpn_l2_multi_domain: false
             enabled: true
             ip_address_virtual: 10.1.21.1/24
           - id: 122
             name: EXT_DC2_LOCAL
             tags: [dc2-ext]
+            evpn_l2_multi_domain: false
             enabled: true
             ip_address_virtual: 10.1.22.1/24
 
@@ -55,11 +61,13 @@ tenants:
           - id: 221
             name: WEW_DC1_LOCAL
             tags: [dc1-wew]
+            evpn_l2_multi_domain: false
             enabled: true
             ip_address_virtual: 10.2.21.1/24
           - id: 222
             name: WEW_DC2_LOCAL
             tags: [dc2-wew]
+            evpn_l2_multi_domain: false
             enabled: true
             ip_address_virtual: 10.2.22.1/24
 
@@ -79,11 +87,13 @@ tenants:
           - id: 321
             name: PRIV_DC1_LOCAL
             tags: [dc1-priv]
+            evpn_l2_multi_domain: false
             enabled: true
             ip_address_virtual: 10.3.21.1/24
           - id: 322
             name: PRIV_DC2_LOCAL
             tags: [dc2-priv]
+            evpn_l2_multi_domain: false
             enabled: true
             ip_address_virtual: 10.3.22.1/24
     # Firewall cluster HA/heartbeat - pure L2, stretched between DCs

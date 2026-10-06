@@ -46,9 +46,11 @@
 - [Filters](#filters)
   - [Prefix-lists](#prefix-lists)
   - [Route-maps](#route-maps)
+  - [AS Path Lists](#as-path-lists)
 - [VRF Instances](#vrf-instances)
   - [VRF Instances Summary](#vrf-instances-summary)
   - [VRF Instances Device Configuration](#vrf-instances-device-configuration)
+- [EOS CLI Device Configuration](#eos-cli-device-configuration)
 
 ## Management
 
@@ -621,6 +623,17 @@ ASN Notation: asplain
 
 #### Router BGP Peer Groups
 
+##### EVPN-OVERLAY-CORE
+
+| Settings | Value |
+| -------- | ----- |
+| Address Family | evpn |
+| Source | Loopback0 |
+| BFD | True |
+| Ebgp multihop | 15 |
+| Send community | all |
+| Maximum routes | 0 (no limit) |
+
 ##### EVPN-OVERLAY-PEERS
 
 | Settings | Value |
@@ -659,6 +672,8 @@ ASN Notation: asplain
 | 10.101.10.8 | 65100 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
 | 10.101.10.10 | 65100 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
 | 10.101.21.5 | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | default | - | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | - | - | - | - | - | - | - | - |
+| 10.102.1.3 | 65202 | default | - | Inherited from peer group EVPN-OVERLAY-CORE | Inherited from peer group EVPN-OVERLAY-CORE | - | - | - | Inherited from peer group EVPN-OVERLAY-CORE | - | - | - | - |
+| 10.102.1.4 | 65202 | default | - | Inherited from peer group EVPN-OVERLAY-CORE | Inherited from peer group EVPN-OVERLAY-CORE | - | - | - | Inherited from peer group EVPN-OVERLAY-CORE | - | - | - | - |
 | 10.101.21.5 | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | PRIV | - | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | Inherited from peer group MLAG-IPv4-UNDERLAY-PEER | - | - | - | - | - | - | - | - |
 
 #### Router BGP EVPN Address Family
@@ -667,15 +682,24 @@ ASN Notation: asplain
 
 | Peer Group | Activate | Route-map In | Route-map Out | Peer-tag In | Peer-tag Out | Encapsulation | Next-hop-self Source Interface |
 | ---------- | -------- | ------------ | ------------- | ----------- | ------------ | ------------- | ------------------------------ |
+| EVPN-OVERLAY-CORE | True | - | - | - | - | default | - |
 | EVPN-OVERLAY-PEERS | True | - | - | - | - | default | - |
+
+##### EVPN DCI Gateway Summary
+
+| Settings | Value |
+| -------- | ----- |
+| Remote Domain Peer Groups | EVPN-OVERLAY-CORE |
+| L3 Gateway Configured | True |
+| L3 Gateway Inter-domain | True |
 
 #### Router BGP VLANs
 
 | VLAN | Route-Distinguisher | Both Route-Target | Import Route Target | Export Route-Target | Redistribute |
 | ---- | ------------------- | ----------------- | ------------------- | ------------------- | ------------ |
-| 310 | 10.101.1.3:310 | 310:310 | - | - | learned |
+| 310 | 10.101.1.3:310 | 310:310<br>remote 310:310 | - | - | learned |
 | 321 | 10.101.1.3:321 | 321:321 | - | - | learned |
-| 399 | 10.101.1.3:399 | 399:399 | - | - | learned |
+| 399 | 10.101.1.3:399 | 399:399<br>remote 399:399 | - | - | learned |
 
 #### Router BGP VRFs
 
@@ -691,6 +715,12 @@ router bgp 65102
    router-id 10.101.1.3
    no bgp default ipv4-unicast
    maximum-paths 4
+   neighbor EVPN-OVERLAY-CORE peer group
+   neighbor EVPN-OVERLAY-CORE update-source Loopback0
+   neighbor EVPN-OVERLAY-CORE bfd
+   neighbor EVPN-OVERLAY-CORE ebgp-multihop 15
+   neighbor EVPN-OVERLAY-CORE send-community
+   neighbor EVPN-OVERLAY-CORE maximum-routes 0
    neighbor EVPN-OVERLAY-PEERS peer group
    neighbor EVPN-OVERLAY-PEERS update-source Loopback0
    neighbor EVPN-OVERLAY-PEERS bfd
@@ -721,11 +751,19 @@ router bgp 65102
    neighbor 10.101.10.10 description marpla-dc-1-s02_Ethernet3
    neighbor 10.101.21.5 peer group MLAG-IPv4-UNDERLAY-PEER
    neighbor 10.101.21.5 description marpla-dc-1-priv-l04_Vlan4093
+   neighbor 10.102.1.3 peer group EVPN-OVERLAY-CORE
+   neighbor 10.102.1.3 remote-as 65202
+   neighbor 10.102.1.3 description marpla-dc-2-priv-l03
+   neighbor 10.102.1.4 peer group EVPN-OVERLAY-CORE
+   neighbor 10.102.1.4 remote-as 65202
+   neighbor 10.102.1.4 description marpla-dc-2-priv-l04
    redistribute connected route-map RM-CONN-2-BGP
    !
    vlan 310
       rd 10.101.1.3:310
+      rd evpn domain remote 10.101.1.3:310
       route-target both 310:310
+      route-target import export evpn domain remote 310:310
       redistribute learned
    !
    vlan 321
@@ -735,18 +773,25 @@ router bgp 65102
    !
    vlan 399
       rd 10.101.1.3:399
+      rd evpn domain remote 10.101.1.3:399
       route-target both 399:399
+      route-target import export evpn domain remote 399:399
       redistribute learned
    !
    address-family evpn
+      neighbor EVPN-OVERLAY-CORE activate
+      neighbor EVPN-OVERLAY-CORE domain remote
       neighbor EVPN-OVERLAY-PEERS activate
+      neighbor default next-hop-self received-evpn-routes route-type ip-prefix inter-domain
    !
    address-family ipv4
+      no neighbor EVPN-OVERLAY-CORE activate
       no neighbor EVPN-OVERLAY-PEERS activate
       neighbor IPv4-UNDERLAY-PEERS activate
       neighbor MLAG-IPv4-UNDERLAY-PEER activate
    !
    address-family rt-membership
+      neighbor EVPN-OVERLAY-CORE activate
       neighbor EVPN-OVERLAY-PEERS activate
    !
    vrf PRIV
@@ -846,6 +891,12 @@ ip prefix-list PL-MLAG-PEER-VRFS
 | -------- | ---- | ----- | --- | ------------- | -------- |
 | 10 | permit | - | origin incomplete | - | - |
 
+##### RM-RTC-LOCAL-ONLY
+
+| Sequence | Type | Match | Set | Sub-Route-Map | Continue |
+| -------- | ---- | ----- | --- | ------------- | -------- |
+| 10 | permit | as-path AS-RTC-LOCAL | - | - | - |
+
 #### Route-maps Device Configuration
 
 ```eos
@@ -861,6 +912,25 @@ route-map RM-CONN-2-BGP-VRFS permit 20
 route-map RM-MLAG-PEER-IN permit 10
    description Make routes learned over MLAG Peer-link less preferred on spines to ensure optimal routing
    set origin incomplete
+!
+route-map RM-RTC-LOCAL-ONLY permit 10
+   description only RT memberships originated by this gateway
+   match as-path AS-RTC-LOCAL
+```
+
+### AS Path Lists
+
+#### AS Path Lists Summary
+
+| List Name | Type | Match | Origin |
+| --------- | ---- | ----- | ------ |
+| AS-RTC-LOCAL | permit | `^$` | any |
+
+#### AS Path Lists Device Configuration
+
+```eos
+!
+ip as-path access-list AS-RTC-LOCAL permit ^$ any
 ```
 
 ## VRF Instances
@@ -879,4 +949,15 @@ route-map RM-MLAG-PEER-IN permit 10
 vrf instance MGMT
 !
 vrf instance PRIV
+```
+
+## EOS CLI Device Configuration
+
+```eos
+!
+router bgp 65102
+   address-family rt-membership
+      neighbor EVPN-OVERLAY-PEERS route-map RM-RTC-LOCAL-ONLY out
+      neighbor EVPN-OVERLAY-CORE route-map RM-RTC-LOCAL-ONLY out
+
 ```

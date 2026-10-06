@@ -1,5 +1,11 @@
 aaa_root:
   disabled: true
+as_path:
+  access_lists:
+  - name: AS-RTC-LOCAL
+    entries:
+    - type: permit
+      match: ^$
 config_end: true
 daemon_terminattr:
   cvaddrs:
@@ -14,6 +20,8 @@ daemon_terminattr:
 dns_domain: avd.lab
 enable_password:
   disabled: true
+eos_cli: "router bgp 65201\n   address-family rt-membership\n      neighbor EVPN-OVERLAY-PEERS route-map RM-RTC-LOCAL-ONLY out\n      neighbor
+  EVPN-OVERLAY-CORE route-map RM-RTC-LOCAL-ONLY out\n"
 ethernet_interfaces:
 - name: Ethernet3
   description: MLAG_marpla-dc-2-wew-l02_Ethernet3
@@ -202,6 +210,13 @@ route_maps:
     - ip address prefix-list PL-MLAG-PEER-VRFS
   - sequence: 20
     type: permit
+- name: RM-RTC-LOCAL-ONLY
+  sequence_numbers:
+  - sequence: 10
+    type: permit
+    description: only RT memberships originated by this gateway
+    match:
+    - as-path AS-RTC-LOCAL
 router_bfd:
   multihop:
     interval: 300
@@ -238,6 +253,14 @@ router_bgp:
     ebgp_multihop: 3
     send_community: all
     maximum_routes: 0
+  - name: EVPN-OVERLAY-CORE
+    metadata:
+      type: evpn
+    update_source: Loopback0
+    bfd: true
+    ebgp_multihop: 15
+    send_community: all
+    maximum_routes: 0
   neighbors:
   - ip_address: 10.102.21.1
     peer_group: MLAG-IPv4-UNDERLAY-PEER
@@ -268,6 +291,18 @@ router_bgp:
     metadata:
       peer: marpla-dc-2-s02
     description: marpla-dc-2-s02_Loopback0
+  - ip_address: 10.101.1.1
+    peer_group: EVPN-OVERLAY-CORE
+    remote_as: '65101'
+    metadata:
+      peer: marpla-dc-1-wew-l01
+    description: marpla-dc-1-wew-l01
+  - ip_address: 10.101.1.2
+    peer_group: EVPN-OVERLAY-CORE
+    remote_as: '65101'
+    metadata:
+      peer: marpla-dc-1-wew-l02
+    description: marpla-dc-1-wew-l02
   redistribute:
     connected:
       enabled: true
@@ -278,9 +313,15 @@ router_bgp:
       tenants:
       - WEW
     rd: 10.102.1.1:210
+    rd_evpn_domain:
+      domain: remote
+      rd: 10.102.1.1:210
     route_targets:
       both:
       - 210:210
+      import_export_evpn_domains:
+      - domain: remote
+        route_target: 210:210
     redistribute_routes:
     - learned
   - id: 222
@@ -294,12 +335,21 @@ router_bgp:
     redistribute_routes:
     - learned
   address_family_evpn:
+    neighbor_default:
+      next_hop_self_received_evpn_routes:
+        enable: true
+        inter_domain: true
     peer_groups:
     - name: EVPN-OVERLAY-PEERS
       activate: true
+    - name: EVPN-OVERLAY-CORE
+      activate: true
+      domain_remote: true
   address_family_rtc:
     peer_groups:
     - name: EVPN-OVERLAY-PEERS
+      activate: true
+    - name: EVPN-OVERLAY-CORE
       activate: true
   address_family_ipv4:
     peer_groups:
@@ -308,6 +358,8 @@ router_bgp:
     - name: IPv4-UNDERLAY-PEERS
       activate: true
     - name: EVPN-OVERLAY-PEERS
+      activate: false
+    - name: EVPN-OVERLAY-CORE
       activate: false
   vrfs:
   - name: WEW

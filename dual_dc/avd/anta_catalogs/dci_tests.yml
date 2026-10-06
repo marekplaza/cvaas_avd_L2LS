@@ -14,15 +14,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.101.0.2
       vrf: default
+    - peer_address: 10.102.1.5
+      vrf: default
+    - peer_address: 10.102.1.6
+      vrf: default
     filters:
       tags:
       - marpla-dc-1-ext-l05
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -43,15 +47,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.101.0.2
       vrf: default
+    - peer_address: 10.102.1.5
+      vrf: default
+    - peer_address: 10.102.1.6
+      vrf: default
     filters:
       tags:
       - marpla-dc-1-ext-l06
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -72,15 +80,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.101.0.2
       vrf: default
+    - peer_address: 10.102.1.3
+      vrf: default
+    - peer_address: 10.102.1.4
+      vrf: default
     filters:
       tags:
       - marpla-dc-1-priv-l03
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -101,15 +113,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.101.0.2
       vrf: default
+    - peer_address: 10.102.1.3
+      vrf: default
+    - peer_address: 10.102.1.4
+      vrf: default
     filters:
       tags:
       - marpla-dc-1-priv-l04
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -148,19 +164,15 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.101.1.2
       vrf: default
-    - peer_address: 10.102.0.1
-      vrf: default
-    - peer_address: 10.102.0.2
-      vrf: default
     filters:
       tags:
       - marpla-dc-1-s01
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 8
+      num_peers: 6
     - afi: rt-membership
-      num_peers: 8
+      num_peers: 6
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -199,19 +211,15 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.101.1.2
       vrf: default
-    - peer_address: 10.102.0.1
-      vrf: default
-    - peer_address: 10.102.0.2
-      vrf: default
     filters:
       tags:
       - marpla-dc-1-s02
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 8
+      num_peers: 6
     - afi: rt-membership
-      num_peers: 8
+      num_peers: 6
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -232,15 +240,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.101.0.2
       vrf: default
+    - peer_address: 10.102.1.1
+      vrf: default
+    - peer_address: 10.102.1.2
+      vrf: default
     filters:
       tags:
       - marpla-dc-1-wew-l01
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -261,15 +273,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.101.0.2
       vrf: default
+    - peer_address: 10.102.1.1
+      vrf: default
+    - peer_address: 10.102.1.2
+      vrf: default
     filters:
       tags:
       - marpla-dc-1-wew-l02
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -290,15 +306,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.102.0.2
       vrf: default
+    - peer_address: 10.101.1.5
+      vrf: default
+    - peer_address: 10.101.1.6
+      vrf: default
     filters:
       tags:
       - marpla-dc-2-ext-l05
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -319,15 +339,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.102.0.2
       vrf: default
+    - peer_address: 10.101.1.5
+      vrf: default
+    - peer_address: 10.101.1.6
+      vrf: default
     filters:
       tags:
       - marpla-dc-2-ext-l06
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -348,15 +372,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.102.0.2
       vrf: default
+    - peer_address: 10.101.1.3
+      vrf: default
+    - peer_address: 10.101.1.4
+      vrf: default
     filters:
       tags:
       - marpla-dc-2-priv-l03
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -377,15 +405,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.102.0.2
       vrf: default
+    - peer_address: 10.101.1.3
+      vrf: default
+    - peer_address: 10.101.1.4
+      vrf: default
     filters:
       tags:
       - marpla-dc-2-priv-l04
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -424,19 +456,15 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.102.1.2
       vrf: default
-    - peer_address: 10.101.0.1
-      vrf: default
-    - peer_address: 10.101.0.2
-      vrf: default
     filters:
       tags:
       - marpla-dc-2-s01
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 8
+      num_peers: 6
     - afi: rt-membership
-      num_peers: 8
+      num_peers: 6
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -475,19 +503,15 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.102.1.2
       vrf: default
-    - peer_address: 10.101.0.1
-      vrf: default
-    - peer_address: 10.101.0.2
-      vrf: default
     filters:
       tags:
       - marpla-dc-2-s02
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 8
+      num_peers: 6
     - afi: rt-membership
-      num_peers: 8
+      num_peers: 6
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -508,15 +532,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.102.0.2
       vrf: default
+    - peer_address: 10.101.1.1
+      vrf: default
+    - peer_address: 10.101.1.2
+      vrf: default
     filters:
       tags:
       - marpla-dc-2-wew-l01
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -537,15 +565,19 @@ anta.tests.routing.bgp:
       vrf: default
     - peer_address: 10.102.0.2
       vrf: default
+    - peer_address: 10.101.1.1
+      vrf: default
+    - peer_address: 10.101.1.2
+      vrf: default
     filters:
       tags:
       - marpla-dc-2-wew-l02
 - VerifyBGPPeerCount:
     address_families:
     - afi: evpn
-      num_peers: 2
+      num_peers: 4
     - afi: rt-membership
-      num_peers: 2
+      num_peers: 4
     - afi: ipv4
       safi: unicast
       vrf: default
@@ -563,60 +595,38 @@ anta.tests.routing.bgp:
       vrf: default
       inbound_route_map: RM-BGP-10.100.0.3-IN
       outbound_route_map: RM-BGP-10.100.0.3-OUT
-    - peer_address: 10.101.10.1
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.5
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.9
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.13
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.17
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.21
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
     filters:
       tags:
       - marpla-dc-1-s01
 - VerifyBGPExchangedRoutes:
+    check_active: false
     bgp_peers:
     - peer_address: 10.100.0.1
       vrf: default
       advertised_routes: &id001
-      - 10.101.0.1/32
-      - 10.101.3.1/32
-      received_routes:
-      - 10.102.0.1/32
-      - 10.102.3.1/32
+      - 10.101.1.1/32
+      - 10.101.1.2/32
+      - 10.101.1.3/32
+      - 10.101.1.4/32
+      - 10.101.1.5/32
+      - 10.101.1.6/32
+      - 10.101.2.1/32
+      - 10.101.2.3/32
+      - 10.101.2.5/32
+      received_routes: &id002
+      - 10.102.1.1/32
+      - 10.102.1.2/32
+      - 10.102.1.3/32
+      - 10.102.1.4/32
+      - 10.102.1.5/32
+      - 10.102.1.6/32
+      - 10.102.2.1/32
+      - 10.102.2.3/32
+      - 10.102.2.5/32
     - peer_address: 10.100.0.3
       vrf: default
       advertised_routes: *id001
-      received_routes:
-      - 10.102.0.2/32
-      - 10.102.3.2/32
-    filters:
-      tags:
-      - marpla-dc-1-s01
-- VerifyEVPNType2Route:
-    vxlan_endpoints:
-    - address: 10.1.10.11
-      vni: 1000110
-    - address: 10.1.10.12
-      vni: 1000110
-    - address: 10.2.10.11
-      vni: 2000210
-    - address: 10.2.10.12
-      vni: 2000210
-    - address: 10.3.10.11
-      vni: 3000310
-    - address: 10.3.10.12
-      vni: 3000310
+      received_routes: *id002
     filters:
       tags:
       - marpla-dc-1-s01
@@ -630,60 +640,38 @@ anta.tests.routing.bgp:
       vrf: default
       inbound_route_map: RM-BGP-10.100.0.7-IN
       outbound_route_map: RM-BGP-10.100.0.7-OUT
-    - peer_address: 10.101.10.3
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.7
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.11
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.15
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.19
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.101.10.23
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
     filters:
       tags:
       - marpla-dc-1-s02
 - VerifyBGPExchangedRoutes:
+    check_active: false
     bgp_peers:
     - peer_address: 10.100.0.5
       vrf: default
-      advertised_routes: &id002
-      - 10.101.0.2/32
-      - 10.101.3.2/32
-      received_routes:
-      - 10.102.0.2/32
-      - 10.102.3.2/32
+      advertised_routes: &id003
+      - 10.101.1.1/32
+      - 10.101.1.2/32
+      - 10.101.1.3/32
+      - 10.101.1.4/32
+      - 10.101.1.5/32
+      - 10.101.1.6/32
+      - 10.101.2.1/32
+      - 10.101.2.3/32
+      - 10.101.2.5/32
+      received_routes: &id004
+      - 10.102.1.1/32
+      - 10.102.1.2/32
+      - 10.102.1.3/32
+      - 10.102.1.4/32
+      - 10.102.1.5/32
+      - 10.102.1.6/32
+      - 10.102.2.1/32
+      - 10.102.2.3/32
+      - 10.102.2.5/32
     - peer_address: 10.100.0.7
       vrf: default
-      advertised_routes: *id002
-      received_routes:
-      - 10.102.0.1/32
-      - 10.102.3.1/32
-    filters:
-      tags:
-      - marpla-dc-1-s02
-- VerifyEVPNType2Route:
-    vxlan_endpoints:
-    - address: 10.1.10.11
-      vni: 1000110
-    - address: 10.1.10.12
-      vni: 1000110
-    - address: 10.2.10.11
-      vni: 2000210
-    - address: 10.2.10.12
-      vni: 2000210
-    - address: 10.3.10.11
-      vni: 3000310
-    - address: 10.3.10.12
-      vni: 3000310
+      advertised_routes: *id003
+      received_routes: *id004
     filters:
       tags:
       - marpla-dc-1-s02
@@ -697,60 +685,38 @@ anta.tests.routing.bgp:
       vrf: default
       inbound_route_map: RM-BGP-10.100.0.6-IN
       outbound_route_map: RM-BGP-10.100.0.6-OUT
-    - peer_address: 10.102.10.1
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.5
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.9
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.13
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.17
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.21
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
     filters:
       tags:
       - marpla-dc-2-s01
 - VerifyBGPExchangedRoutes:
+    check_active: false
     bgp_peers:
     - peer_address: 10.100.0.0
       vrf: default
-      advertised_routes: &id003
-      - 10.102.0.1/32
-      - 10.102.3.1/32
-      received_routes:
-      - 10.101.0.1/32
-      - 10.101.3.1/32
+      advertised_routes: &id005
+      - 10.102.1.1/32
+      - 10.102.1.2/32
+      - 10.102.1.3/32
+      - 10.102.1.4/32
+      - 10.102.1.5/32
+      - 10.102.1.6/32
+      - 10.102.2.1/32
+      - 10.102.2.3/32
+      - 10.102.2.5/32
+      received_routes: &id006
+      - 10.101.1.1/32
+      - 10.101.1.2/32
+      - 10.101.1.3/32
+      - 10.101.1.4/32
+      - 10.101.1.5/32
+      - 10.101.1.6/32
+      - 10.101.2.1/32
+      - 10.101.2.3/32
+      - 10.101.2.5/32
     - peer_address: 10.100.0.6
       vrf: default
-      advertised_routes: *id003
-      received_routes:
-      - 10.101.0.2/32
-      - 10.101.3.2/32
-    filters:
-      tags:
-      - marpla-dc-2-s01
-- VerifyEVPNType2Route:
-    vxlan_endpoints:
-    - address: 10.1.10.11
-      vni: 1000110
-    - address: 10.1.10.12
-      vni: 1000110
-    - address: 10.2.10.11
-      vni: 2000210
-    - address: 10.2.10.12
-      vni: 2000210
-    - address: 10.3.10.11
-      vni: 3000310
-    - address: 10.3.10.12
-      vni: 3000310
+      advertised_routes: *id005
+      received_routes: *id006
     filters:
       tags:
       - marpla-dc-2-s01
@@ -764,60 +730,38 @@ anta.tests.routing.bgp:
       vrf: default
       inbound_route_map: RM-BGP-10.100.0.2-IN
       outbound_route_map: RM-BGP-10.100.0.2-OUT
-    - peer_address: 10.102.10.3
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.7
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.11
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.15
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.19
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
-    - peer_address: 10.102.10.23
-      vrf: default
-      outbound_route_map: RM-UNDERLAY-TO-LEAFS
     filters:
       tags:
       - marpla-dc-2-s02
 - VerifyBGPExchangedRoutes:
+    check_active: false
     bgp_peers:
     - peer_address: 10.100.0.4
       vrf: default
-      advertised_routes: &id004
-      - 10.102.0.2/32
-      - 10.102.3.2/32
-      received_routes:
-      - 10.101.0.2/32
-      - 10.101.3.2/32
+      advertised_routes: &id007
+      - 10.102.1.1/32
+      - 10.102.1.2/32
+      - 10.102.1.3/32
+      - 10.102.1.4/32
+      - 10.102.1.5/32
+      - 10.102.1.6/32
+      - 10.102.2.1/32
+      - 10.102.2.3/32
+      - 10.102.2.5/32
+      received_routes: &id008
+      - 10.101.1.1/32
+      - 10.101.1.2/32
+      - 10.101.1.3/32
+      - 10.101.1.4/32
+      - 10.101.1.5/32
+      - 10.101.1.6/32
+      - 10.101.2.1/32
+      - 10.101.2.3/32
+      - 10.101.2.5/32
     - peer_address: 10.100.0.2
       vrf: default
-      advertised_routes: *id004
-      received_routes:
-      - 10.101.0.1/32
-      - 10.101.3.1/32
-    filters:
-      tags:
-      - marpla-dc-2-s02
-- VerifyEVPNType2Route:
-    vxlan_endpoints:
-    - address: 10.1.10.11
-      vni: 1000110
-    - address: 10.1.10.12
-      vni: 1000110
-    - address: 10.2.10.11
-      vni: 2000210
-    - address: 10.2.10.12
-      vni: 2000210
-    - address: 10.3.10.11
-      vni: 3000310
-    - address: 10.3.10.12
-      vni: 3000310
+      advertised_routes: *id007
+      received_routes: *id008
     filters:
       tags:
       - marpla-dc-2-s02
@@ -906,11 +850,9 @@ anta.tests.routing.bgp:
       tags:
       - marpla-dc-2-wew-l02
 anta.tests.vxlan:
-- VerifyVxlanVniBinding:
-    bindings:
-      1000110: 110
-      1000121: 121
-      1009000: EXT
+- VerifyVxlanVtep:
+    vteps:
+    - 10.102.2.5
     filters:
       tags:
       - marpla-dc-1-ext-l05
@@ -921,13 +863,24 @@ anta.tests.vxlan:
       1009000: EXT
     filters:
       tags:
+      - marpla-dc-1-ext-l05
+- VerifyVxlanVtep:
+    vteps:
+    - 10.102.2.5
+    filters:
+      tags:
       - marpla-dc-1-ext-l06
 - VerifyVxlanVniBinding:
     bindings:
-      3000310: 310
-      3000321: 321
-      3000399: 399
-      3009000: PRIV
+      1000110: 110
+      1000121: 121
+      1009000: EXT
+    filters:
+      tags:
+      - marpla-dc-1-ext-l06
+- VerifyVxlanVtep:
+    vteps:
+    - 10.102.2.3
     filters:
       tags:
       - marpla-dc-1-priv-l03
@@ -939,36 +892,25 @@ anta.tests.vxlan:
       3009000: PRIV
     filters:
       tags:
+      - marpla-dc-1-priv-l03
+- VerifyVxlanVtep:
+    vteps:
+    - 10.102.2.3
+    filters:
+      tags:
       - marpla-dc-1-priv-l04
 - VerifyVxlanVniBinding:
     bindings:
-      1000110: 110
-      1009000: EXT
-      2000210: 210
-      2009000: WEW
       3000310: 310
+      3000321: 321
       3000399: 399
       3009000: PRIV
     filters:
       tags:
-      - marpla-dc-1-s01
-- VerifyVxlanVniBinding:
-    bindings:
-      1000110: 110
-      1009000: EXT
-      2000210: 210
-      2009000: WEW
-      3000310: 310
-      3000399: 399
-      3009000: PRIV
-    filters:
-      tags:
-      - marpla-dc-1-s02
-- VerifyVxlanVniBinding:
-    bindings:
-      2000210: 210
-      2000221: 221
-      2009000: WEW
+      - marpla-dc-1-priv-l04
+- VerifyVxlanVtep:
+    vteps:
+    - 10.102.2.1
     filters:
       tags:
       - marpla-dc-1-wew-l01
@@ -979,12 +921,24 @@ anta.tests.vxlan:
       2009000: WEW
     filters:
       tags:
+      - marpla-dc-1-wew-l01
+- VerifyVxlanVtep:
+    vteps:
+    - 10.102.2.1
+    filters:
+      tags:
       - marpla-dc-1-wew-l02
 - VerifyVxlanVniBinding:
     bindings:
-      1000110: 110
-      1000122: 122
-      1009000: EXT
+      2000210: 210
+      2000221: 221
+      2009000: WEW
+    filters:
+      tags:
+      - marpla-dc-1-wew-l02
+- VerifyVxlanVtep:
+    vteps:
+    - 10.101.2.5
     filters:
       tags:
       - marpla-dc-2-ext-l05
@@ -995,13 +949,24 @@ anta.tests.vxlan:
       1009000: EXT
     filters:
       tags:
+      - marpla-dc-2-ext-l05
+- VerifyVxlanVtep:
+    vteps:
+    - 10.101.2.5
+    filters:
+      tags:
       - marpla-dc-2-ext-l06
 - VerifyVxlanVniBinding:
     bindings:
-      3000310: 310
-      3000322: 322
-      3000399: 399
-      3009000: PRIV
+      1000110: 110
+      1000122: 122
+      1009000: EXT
+    filters:
+      tags:
+      - marpla-dc-2-ext-l06
+- VerifyVxlanVtep:
+    vteps:
+    - 10.101.2.3
     filters:
       tags:
       - marpla-dc-2-priv-l03
@@ -1013,36 +978,25 @@ anta.tests.vxlan:
       3009000: PRIV
     filters:
       tags:
+      - marpla-dc-2-priv-l03
+- VerifyVxlanVtep:
+    vteps:
+    - 10.101.2.3
+    filters:
+      tags:
       - marpla-dc-2-priv-l04
 - VerifyVxlanVniBinding:
     bindings:
-      1000110: 110
-      1009000: EXT
-      2000210: 210
-      2009000: WEW
       3000310: 310
+      3000322: 322
       3000399: 399
       3009000: PRIV
     filters:
       tags:
-      - marpla-dc-2-s01
-- VerifyVxlanVniBinding:
-    bindings:
-      1000110: 110
-      1009000: EXT
-      2000210: 210
-      2009000: WEW
-      3000310: 310
-      3000399: 399
-      3009000: PRIV
-    filters:
-      tags:
-      - marpla-dc-2-s02
-- VerifyVxlanVniBinding:
-    bindings:
-      2000210: 210
-      2000222: 222
-      2009000: WEW
+      - marpla-dc-2-priv-l04
+- VerifyVxlanVtep:
+    vteps:
+    - 10.101.2.1
     filters:
       tags:
       - marpla-dc-2-wew-l01
@@ -1051,202 +1005,24 @@ anta.tests.vxlan:
       2000210: 210
       2000222: 222
       2009000: WEW
+    filters:
+      tags:
+      - marpla-dc-2-wew-l01
+- VerifyVxlanVtep:
+    vteps:
+    - 10.101.2.1
     filters:
       tags:
       - marpla-dc-2-wew-l02
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.2.1
-    - 10.101.2.3
-    - 10.101.2.5
-    - 10.102.3.1
-    - 10.102.3.2
-    filters:
-      tags:
-      - marpla-dc-1-s01
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.2.1
-    - 10.101.2.3
-    - 10.101.2.5
-    - 10.102.3.1
-    - 10.102.3.2
-    filters:
-      tags:
-      - marpla-dc-1-s02
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.3.1
-    - 10.101.3.2
-    - 10.102.2.1
-    - 10.102.2.3
-    - 10.102.2.5
-    filters:
-      tags:
-      - marpla-dc-2-s01
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.3.1
-    - 10.101.3.2
-    - 10.102.2.1
-    - 10.102.2.3
-    - 10.102.2.5
-    filters:
-      tags:
-      - marpla-dc-2-s02
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.3.1
-    - 10.101.3.2
-    filters:
-      tags:
-      - marpla-dc-1-ext-l05
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.3.1
-    - 10.101.3.2
-    filters:
-      tags:
-      - marpla-dc-1-ext-l06
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.3.1
-    - 10.101.3.2
-    filters:
-      tags:
-      - marpla-dc-1-priv-l03
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.3.1
-    - 10.101.3.2
-    filters:
-      tags:
-      - marpla-dc-1-priv-l04
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.3.1
-    - 10.101.3.2
-    filters:
-      tags:
-      - marpla-dc-1-wew-l01
-- VerifyVxlanVtep:
-    vteps:
-    - 10.101.3.1
-    - 10.101.3.2
-    filters:
-      tags:
-      - marpla-dc-1-wew-l02
-- VerifyVxlanVtep:
-    vteps:
-    - 10.102.3.1
-    - 10.102.3.2
-    filters:
-      tags:
-      - marpla-dc-2-ext-l05
-- VerifyVxlanVtep:
-    vteps:
-    - 10.102.3.1
-    - 10.102.3.2
-    filters:
-      tags:
-      - marpla-dc-2-ext-l06
-- VerifyVxlanVtep:
-    vteps:
-    - 10.102.3.1
-    - 10.102.3.2
-    filters:
-      tags:
-      - marpla-dc-2-priv-l03
-- VerifyVxlanVtep:
-    vteps:
-    - 10.102.3.1
-    - 10.102.3.2
-    filters:
-      tags:
-      - marpla-dc-2-priv-l04
-- VerifyVxlanVtep:
-    vteps:
-    - 10.102.3.1
-    - 10.102.3.2
-    filters:
-      tags:
-      - marpla-dc-2-wew-l01
-- VerifyVxlanVtep:
-    vteps:
-    - 10.102.3.1
-    - 10.102.3.2
+- VerifyVxlanVniBinding:
+    bindings:
+      2000210: 210
+      2000222: 222
+      2009000: WEW
     filters:
       tags:
       - marpla-dc-2-wew-l02
 anta.tests.evpn:
-- VerifyEVPNType5Routes:
-    prefixes:
-    - address: 10.1.21.0/24
-      vni: 1009000
-    - address: 10.1.22.0/24
-      vni: 1009000
-    - address: 10.2.21.0/24
-      vni: 2009000
-    - address: 10.2.22.0/24
-      vni: 2009000
-    - address: 10.3.21.0/24
-      vni: 3009000
-    - address: 10.3.22.0/24
-      vni: 3009000
-    filters:
-      tags:
-      - marpla-dc-1-s01
-- VerifyEVPNType5Routes:
-    prefixes:
-    - address: 10.1.21.0/24
-      vni: 1009000
-    - address: 10.1.22.0/24
-      vni: 1009000
-    - address: 10.2.21.0/24
-      vni: 2009000
-    - address: 10.2.22.0/24
-      vni: 2009000
-    - address: 10.3.21.0/24
-      vni: 3009000
-    - address: 10.3.22.0/24
-      vni: 3009000
-    filters:
-      tags:
-      - marpla-dc-1-s02
-- VerifyEVPNType5Routes:
-    prefixes:
-    - address: 10.1.21.0/24
-      vni: 1009000
-    - address: 10.1.22.0/24
-      vni: 1009000
-    - address: 10.2.21.0/24
-      vni: 2009000
-    - address: 10.2.22.0/24
-      vni: 2009000
-    - address: 10.3.21.0/24
-      vni: 3009000
-    - address: 10.3.22.0/24
-      vni: 3009000
-    filters:
-      tags:
-      - marpla-dc-2-s01
-- VerifyEVPNType5Routes:
-    prefixes:
-    - address: 10.1.21.0/24
-      vni: 1009000
-    - address: 10.1.22.0/24
-      vni: 1009000
-    - address: 10.2.21.0/24
-      vni: 2009000
-    - address: 10.2.22.0/24
-      vni: 2009000
-    - address: 10.3.21.0/24
-      vni: 3009000
-    - address: 10.3.22.0/24
-      vni: 3009000
-    filters:
-      tags:
-      - marpla-dc-2-s02
 - VerifyEVPNType5Routes:
     prefixes:
     - address: 10.1.22.0/24

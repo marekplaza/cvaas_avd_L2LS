@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Render the dual-DC topology diagrams used in README.md as PNG files.
 
-    python3 tools/gen_png.py          # variant without RT Constraint
-    python3 tools/gen_png.py --rtc    # variant with RT Constraint
+    python3 tools/gen_png.py          # multi-domain: per-zone gateways on the leaf pairs, RTC
 
 Writes docs/topology-physical.png, docs/topology-logical.png and
 docs/control-plane.png. Addresses and ASNs come from the AVD structured
@@ -125,7 +124,7 @@ def physical():
             title=f"DC{dc} · marpla-DC{dc} · AS {65000 + 100 * dc}–{65003 + 100 * dc}")
         for i, sx in ((1, ox + 6), (2, ox + 28)):
             h = f"marpla-dc-{dc}-s0{i}"
-            nodes[h] = box(ax, sx, 37, 14, 5, f"{h}\nspine + EVPN GW · {mgmt(h)}", SPINE_FILL, SPINE_EDGE, fs=9)
+            nodes[h] = box(ax, sx, 37, 14, 5, f"{h}\nspine / route server · {mgmt(h)}", SPINE_FILL, SPINE_EDGE, fs=9)
         for k, (z, (fill, edge, first, *_)) in enumerate(ZONES.items()):
             zx = ox + 1 + k * 15.7
             box(ax, zx, 17, 15, 12, fc=fill, ec=edge, r=0.8, z=0, title=f"dmz:{z} · AS {asn(f'marpla-dc-{dc}-{z}-l0{first}')}", fs=9)
@@ -163,89 +162,85 @@ def physical():
 
 # --------------------------------------------------------------------------- logical
 def logical():
-    fig, ax = canvas(20, 12.5, "Dual DC + DCI – topologia logiczna" + (" (z RT Constraint)" if RTC else ""))
-    gws = {}
+    fig, ax = canvas(20, 13.5, "Dual DC + DCI – topologia logiczna, multi-domain (każda strefa = osobna domena EVPN)")
+    zb = {}
     for dc, ox in ((1, 1), (2, 58)):
-        box(ax, ox, 13, 41, 45.5, fc="none", ec="#999999", ls="--", r=1, z=0,
+        o = 3 - dc
+        box(ax, ox, 21, 41, 42.5, fc="none", ec="#999999", ls="--", r=1, z=0,
             title=f"DC{dc} · AS {65000 + 100 * dc} (spine'y), {65001 + 100 * dc}–{65003 + 100 * dc} (pary leafów)")
-        gws[dc] = box(ax, ox + 1.5, 43, 38, 12, fc="none", ec=GW_EDGE, ls="--", r=0.8, z=0)
-        ax.text(ox + 2, 54.6, f"Domena bram EVPN DC{dc}: all-active (I-ESI 0000:0000:000{dc}:000{dc}:000{dc}), D-path {65000 + 100 * dc}:{dc}",
-                fontsize=8.5, color=PURPLE, va="top")
-        for i, sx in ((1, ox + 2.5), (2, ox + 21)):
+        sp = []
+        for i, sx in ((1, ox + 3), (2, ox + 22)):
             h = f"marpla-dc-{dc}-s0{i}"
-            box(ax, sx, 44, 17, 9, f"{h}\nAS {asn(h)} · Lo0 {lo(h, 'Loopback0')}\nVTEP {lo(h, 'Loopback1')}\nRoute Server EVPN + EVPN GW",
-                GW_FILL, GW_EDGE, fs=9)
+            sp.append(box(ax, sx, 51, 16, 7, f"{h}\nAS {asn(h)} · Lo0 {lo(h, 'Loopback0')}\nroute server EVPN (bez VTEP/VRF)\n+ tranzyt underlay DCI",
+                          SPINE_FILL, SPINE_EDGE, fs=8.5))
         for k, (z, (fill, edge, first, vlan, octet, vid)) in enumerate(ZONES.items()):
             zx = ox + 1 + k * 13.4
             h = f"marpla-dc-{dc}-{z}-l0{first}"
             loc = int(f"{str(vlan)[0]}2{dc}")
-            txt = (f"dc{dc}-{z} · AS {asn(h)}\nMLAG l0{first}+l0{first + 1}\nVTEP {lo(h, 'Loopback1')}\n"
-                   f"VRF {z.upper()} · L3VNI {octet}009000\nRT {vid}:{vid}\n"
+            txt = (f"dc{dc}-{z} · AS {asn(h)}\nMLAG l0{first}+l0{first + 1} · VTEP {lo(h, 'Loopback1')}\n"
+                   f"EVPN GW strefy (domain remote)\n⇄ dc{o}-{z} {'10.10' + str(o)}.1.{first}/.{first + 1}\n"
+                   f"VRF {z.upper()} · L3VNI {octet}009000 · RT {vid}:{vid}\n"
                    f"VLAN {vlan} → {octet}000{vlan} (DCI)\nVLAN {loc} → {octet}000{loc} (lokalny)"
-                   + (f"\nVLAN 399 → 3000399 (FW HA)" if z == "priv" else "")
-                   + f"\nanycast GW 10.{octet}.10.1")
-            b = box(ax, zx, 17, 12.6, 16, txt, fill, edge, fs=8.5, align="left", va="top")
-            line(ax, [top(b, 0.4), (top(b, 0.4)[0], 43)], BLUE, lw=2)
-            line(ax, [top(b, 0.6), (top(b, 0.6)[0], 43)], PURPLE, lw=2, ls=(0, (5, 3)))
-            if dc == 1:
-                gws.setdefault("zones", []).append(b)
-        note = ("RTC (rt-membership): route server wysyła parze leafów\ntylko trasy EVPN jej strefy"
-                if RTC else "bez RTC: route server wysyła każdej parze leafów trasy\nwszystkich stref (odrzucane dopiero przy imporcie do VRF)")
-        label(ax, ox + 20.5, 38.5, note, fs=8.5, color=GREEN if RTC else RED, bg="#ffffff")
-        label(ax, ox + 20.5, 35.2, "RM-UNDERLAY-TO-LEAFS: loopbacki bram drugiego DC nie trafiają do leafów", fs=7.5, bg="#fff2cc")
-        fw = box(ax, ox + 13, 14, 15, 2.2, f"marpla-dc-{dc}-fw01 – noga (trunk) w każdej strefie", FW_FILL, FW_EDGE, fs=8,
-                 bold_first=False)
-    # DCI between gateway domains
-    rows = [(BLUE, "-", 2.4, 52.5, "eBGP underlay × 4 (/31)\ntylko Lo0 + VTEP bram (PL-DCI-OUT/IN)"),
-            (PURPLE, (0, (5, 3)), 2.4, 48.5, "eBGP EVPN multihop Lo0 ↔ Lo0\nEVPN-OVERLAY-CORE · domain remote"),
-            (GREEN, (0, (1, 2)), 3, 44.5, "VXLAN brama ↔ brama, tylko VNI DCI:\n1000110 · 2000210 · 3000310 · 3000399")]
-    for color, ls, lw, yy, txt in rows:
-        line(ax, [(gws[1][0] + gws[1][2], yy), (gws[2][0], yy)], color, lw=lw, ls=ls)
-        label(ax, 50, yy, txt, fs=8, color=color)
-    box(ax, 15, 3.5, 70, 6.5,
+                   + (f"\nVLAN 399 → 3000399 (FW HA)" if z == "priv" else ""))
+            b = box(ax, zx, 27, 12.6, 15.5, txt, fill, edge, fs=7.8, align="left", va="top")
+            zb[(dc, z)] = b
+            for s_ in sp:
+                line(ax, [top(b, 0.35), bottom(s_, 0.3 + 0.2 * k)], BLUE, lw=1.4)
+                line(ax, [top(b, 0.65), bottom(s_, 0.4 + 0.2 * k)], PURPLE, lw=1.4, ls=(0, (5, 3)))
+        label(ax, ox + 20.5, 47.5, "RTC + RM-RTC-LOCAL-ONLY: para ogłasza tylko RT swojej strefy\n– route server wysyła jej tylko trasy jej strefy",
+              fs=8, color=GREEN, bg="#fff2cc")
+        box(ax, ox + 13, 22, 15, 2.6, f"marpla-dc-{dc}-fw01 – noga w każdej strefie", FW_FILL, FW_EDGE, fs=8, bold_first=False)
+    # DCI underlay between the spine layers
+    line(ax, [(42, 54.5), (58, 54.5)], BLUE, lw=2.4)
+    label(ax, 50, 54.5, "eBGP underlay × 4 (/31)\ntylko Lo0 + VTEP leafów", fs=8, color=BLUE)
+    # per-zone DCI sessions, routed below the zone boxes
+    for k, z in enumerate(ZONES):
+        a, b = zb[(1, z)], zb[(2, z)]
+        ye, yv = 19 - k * 2.6, 17.9 - k * 2.6
+        pa, pb = bottom(a, 0.35), bottom(b, 0.35)
+        line(ax, [pa, (pa[0], ye), (pb[0], ye), pb], PURPLE, lw=2, ls=(0, (5, 3)))
+        pa, pb = bottom(a, 0.65), bottom(b, 0.65)
+        line(ax, [pa, (pa[0], yv), (pb[0], yv), pb], GREEN, lw=2.6, ls=(0, (1, 2)))
+        first = ZONES[z][2]
+        label(ax, 50, ye, f"{z}: EVPN multihop l0{first}/l0{first + 1} ⇄ l0{first}/l0{first + 1} (domain remote)", fs=7.5, color=PURPLE)
+        label(ax, 50, yv, f"{z}: VXLAN 10.101.2.{first} ⇄ 10.102.2.{first}", fs=7.5, color=GREEN)
+    box(ax, 15, 3, 70, 6,
         "Geo-rozciągnięty klaster FW A/P – węzeł A w DC1, węzeł P w DC2\n"
-        "Ten sam anycast gateway (IP + MAC 00:1c:73:00:dc:99) w obu DC · HA po VLAN 399 (czyste L2 przez DCI)\n"
-        "Ruch między strefami tylko przez FW (router-on-a-stick) – strefy to osobne VRF-y bez przecieków",
+        "Ten sam anycast gateway (IP + MAC 00:1c:73:00:dc:99) w obu DC · HA po VLAN 399 (L2 przez DCI w domenie priv)\n"
+        "Ruch między strefami tylko przez FW – strefy to osobne VRF-y i osobne domeny EVPN",
         FW_FILL, FW_EDGE, fs=9, ls="--")
-    legend(ax, 87, 9.5, [(BLUE, "-", 2, "eBGP underlay"), (PURPLE, (0, (5, 3)), 2, "eBGP EVPN"),
+    legend(ax, 87, 8.5, [(BLUE, "-", 2, "eBGP underlay"), (PURPLE, (0, (5, 3)), 2, "eBGP EVPN"),
                          (GREEN, (0, (1, 2)), 3, "VXLAN")], fs=8.5)
     fig.savefig(os.path.join(OUT, "topology-logical.png"), dpi=110, bbox_inches="tight")
 
 
 # --------------------------------------------------------------------------- control plane
 def control_plane():
-    fig, ax = canvas(16, 9, "Płaszczyzna sterowania EVPN w DC1 – " + ("z RT Constraint" if RTC else "bez RT Constraint"))
-    rs = box(ax, 25, 41, 50, 9, "Route servery EVPN + bramy: marpla-dc-1-s01, marpla-dc-1-s02\n"
-             "importują wszystkie strefy (EXT, WEW, PRIV) – obsługują DCI dla każdej z nich"
-             + ("\nrt-membership: default-route-target only" if RTC else ""), GW_FILL, GW_EDGE, fs=10)
-    rts = {"wew": "RT 20:20 · 210:210 · 221:221", "priv": "RT 30:30 · 310:310 · 321:321 · 399:399",
-           "ext": "RT 10:10 · 110:110 · 121:121"}
-    pairs = {}
-    for k, (z, (fill, edge, first, *_)) in enumerate(ZONES.items()):
-        pairs[z] = box(ax, 4 + k * 32.5, 6, 27, 11, f"dc1-{z}-l0{first} + l0{first + 1}\nVRF {z.upper()}\nimportuje: {rts[z]}",
-                       fill, edge, fs=9.5)
-    for k, (z, b) in enumerate(pairs.items()):
-        for j, (rz, (fill, edge, *_)) in enumerate(ZONES.items()):
-            own = rz == z
-            if RTC and not own:
-                continue
-            x0 = rs[0] + rs[2] * (0.2 + 0.3 * k) + (j - 1) * 1.6
-            x1 = b[0] + b[2] * (0.3 + 0.2 * j)
-            line(ax, [(x0, rs[1]), (x1, b[1] + b[3])], edge, lw=3 if own else 1.6, ls="-" if own else (0, (3, 2)),
-                 arrow=True, z=2 if own else 1)
-        if RTC:
-            line(ax, [top(b, 0.85), (rs[0] + rs[2] * (0.27 + 0.3 * k), rs[1])], "#333333", lw=1.2, ls=(0, (1, 2)), arrow=True)
-            label(ax, b[0] + b[2] * 0.5, 23.5, f"rt-membership: {rts[z][3:]}", fs=8, color="#333333")
-            label(ax, b[0] + b[2] * 0.5, 30, f"trasy {z} ✓", fs=9, color=ZONES[z][1], bold=True)
-        else:
-            label(ax, b[0] + b[2] * 0.5, 28,
-                  f"trasy {z}: import do VRF ✓\ntrasy pozostałych stref: w tablicy BGP,\nodrzucane dopiero przy imporcie",
-                  fs=8, color="#333333")
-    msg = ("Zmierzone na dc1-priv-l03: 40 ścieżek EVPN w tablicy BGP, każda z RT strefy priv\n"
-           "(bez RTC: 144 ścieżki, z czego 104 wyłącznie z RT innych stref)") if RTC else \
-          ("Zmierzone na dc1-priv-l03: 144 ścieżki EVPN w tablicy BGP, 104 z nich wyłącznie z RT stref ext/wew\n"
-           "– separacja stref tylko na poziomie VRF/importu, nie płaszczyzny sterowania")
-    label(ax, 50, 2.5, msg, fs=9.5, color=GREEN if RTC else RED, bg="#ffffff")
+    fig, ax = canvas(18, 10, "Płaszczyzna sterowania EVPN – multi-domain: każda strefa osobno, także przez DCI")
+    rts = {"wew": "20:20 · 210:210 · 22x:22x", "priv": "30:30 · 310:310 · 32x:32x · 399:399", "ext": "10:10 · 110:110 · 12x:12x"}
+    for dc, ox in ((1, 2), (2, 54)):
+        rs = box(ax, ox + 6, 43, 32, 7, f"Route servery DC{dc}: marpla-dc-{dc}-s01/s02\nbez VTEP i VRF · tylko trasy stref DC{dc}\n"
+                 "rt-membership: default-route-target only", SPINE_FILL, SPINE_EDGE, fs=9)
+        for k, (z, (fill, edge, first, *_)) in enumerate(ZONES.items()):
+            b = box(ax, ox + k * 15, 14, 13.5, 10, f"dc{dc}-{z} l0{first}+l0{first + 1}\nEVPN GW strefy\nRT {rts[z]}",
+                    fill, edge, fs=7.8)
+            x0 = rs[0] + rs[2] * (0.2 + 0.3 * k)
+            line(ax, [(x0 - 0.8, rs[1]), (b[0] + b[2] * 0.4, b[1] + b[3])], edge, lw=2.6, arrow=True, z=2)
+            line(ax, [(b[0] + b[2] * 0.6, b[1] + b[3]), (x0 + 0.8, rs[1])], "#333333", lw=1, ls=(0, (1, 2)), arrow=True)
+            label(ax, b[0] + b[2] * 0.5, 33, f"tylko {z}", fs=8.5, color=edge, bold=True)
+            pairs = ax._marpla_pairs = getattr(ax, "_marpla_pairs", {})
+            pairs[(dc, z)] = b
+    for k, z in enumerate(ZONES):
+        a, b = ax._marpla_pairs[(1, z)], ax._marpla_pairs[(2, z)]
+        yy = 11.5 - k * 2.4
+        pa, pb = bottom(a), bottom(b)
+        line(ax, [pa, (pa[0], yy), (pb[0], yy), pb], ZONES[z][1], lw=2.4, ls=(0, (5, 3)))
+        label(ax, 50, yy + 0.8, f"{z}: EVPN-OVERLAY-CORE tylko między parami {z} (RT {z}, domain remote)", fs=8, color=ZONES[z][1], bg=None)
+    label(ax, 50, 39, "RM-RTC-LOCAL-ONLY: brama ogłasza tylko członkostwo RT, które sama generuje –\n"
+                      "członkostwo 0/0 route serverów jednego DC nie przechodzi przez DCI do drugiego", fs=8.5, color="#333333", bg="#fff2cc")
+    label(ax, 50, 2, "Zmierzone: tablica BGP EVPN leafa zawiera tylko trasy jego strefy (dc1-priv-l03: 46 ścieżek, wszystkie priv; "
+                     "dc1-wew-l01: 37, wszystkie wew)\nroute servery: tylko trasy stref własnego DC (dc1-s01: 52 ścieżki), "
+                     "trasy z drugiego DC kończą się na bramie strefy", fs=8.5, color=GREEN)
     fig.savefig(os.path.join(OUT, "control-plane.png"), dpi=110, bbox_inches="tight")
 
 
@@ -254,4 +249,4 @@ if __name__ == "__main__":
     physical()
     logical()
     control_plane()
-    print("written to", OUT, "(RTC variant)" if RTC else "(no RTC variant)")
+    print("written to", OUT, "(multi-domain)")

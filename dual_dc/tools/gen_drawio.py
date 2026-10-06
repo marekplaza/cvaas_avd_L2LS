@@ -130,14 +130,14 @@ def dc_nodes(p, dc, ox, logical):
     ids = {}
     asb = 65000 + 100 * dc
     p.box(f"DC{dc} · marpla-DC{dc} · AS {asb}–{asb + 3}" + ("" if logical else f" · mgmt 10.30.{dc}x.x"),
-          ox, 60, 1000, 900 if logical else 820, DCBOX)
+          ox, 60, 1000, 920 if logical else 820, DCBOX)
     for i in (1, 2):
         name = f"marpla-dc-{dc}-s0{i}"
         x = ox + (190 if i == 1 else 600)
         if logical:
-            label = (f"<b>{name}</b><br>AS {asb} · Lo0 10.10{dc}.0.{i}<br>VTEP Lo1 10.10{dc}.3.{i}"
-                     f"<br>EVPN route server + EVPN GW<br>RD 10.10{dc}.0.{i}:&lt;VLAN|vrf_id&gt; (też domain remote)")
-            ids[f"s{i}"] = p.box(label, x, 170, 210, 70, BASE + GW)
+            label = (f"<b>{name}</b><br>AS {asb} · Lo0 10.10{dc}.0.{i}<br>EVPN route server (bez VTEP, bez VRF)"
+                     f"<br>+ tranzyt underlay DCI")
+            ids[f"s{i}"] = p.box(label, x, 170, 210, 70, BASE + SPINE)
         else:
             label = f"<b>{name}</b><br>spine · mgmt 10.30.{dc}1.{i}"
             ids[f"s{i}"] = p.box(label, x, 230, 210, 50, BASE + SPINE)
@@ -147,16 +147,18 @@ def dc_nodes(p, dc, ox, logical):
         zx = ox + 20 + k * 325
         zas = asb + 1 + k
         if logical:
-            p.box(f"dmz:{z}", zx, 420, 310, 250, f"rounded=1;whiteSpace=wrap;html=1;fillColor={fill};strokeColor={stroke};"
+            p.box(f"dmz:{z} – osobna domena EVPN", zx, 420, 310, 280, f"rounded=1;whiteSpace=wrap;html=1;fillColor={fill};strokeColor={stroke};"
                   "verticalAlign=top;align=left;spacingLeft=6;fontStyle=1;fontSize=12;arcSize=4;")
             vt = f"10.10{dc}.2.{first}"
             loc = int(f"{str(vlan)[0]}2{dc}")
+            o = 3 - dc
             label = (f"<b>dc{dc}-{z}</b> · AS {zas}<br>MLAG l0{first} + l0{first + 1}<br>VTEP {vt} (shared)"
+                     f"<br><b>EVPN GW strefy</b> (domain remote)<br>⇄ dc{o}-{z} 10.10{o}.1.{first}/.{first + 1}, AS {65000 + 100 * o + 1 + k}"
                      f"<br>VRF {z.upper()} · L3VNI {octet}009000 · RT {octet}0:{octet}0"
                      f"<br><b>VLAN {vlan}</b> → VNI {octet}000{vlan} · RT {vlan}:{vlan} <i>(DCI)</i><br>&nbsp;&nbsp;GW 10.{octet}.10.1"
                      f"<br>VLAN {loc} → VNI {octet}000{loc} · RT {loc}:{loc} <i>(local)</i><br>&nbsp;&nbsp;GW 10.{octet}.2{dc}.1"
                      + ("<br>VLAN 399 → VNI 3000399 <i>(FW HA, L2)</i>" if z == "priv" else ""))
-            ids[z] = p.box(label, zx + 15, 450, 280, 200, BASE + f"fillColor=#ffffff;strokeColor={stroke};align=left;spacingLeft=6;")
+            ids[z] = p.box(label, zx + 15, 450, 280, 235, BASE + f"fillColor=#ffffff;strokeColor={stroke};align=left;spacingLeft=6;")
         else:
             p.box(f"dmz:{z} · AS {zas}", zx, 400, 310, 130, f"rounded=1;whiteSpace=wrap;html=1;fillColor={fill};strokeColor={stroke};"
                   "verticalAlign=top;align=left;spacingLeft=6;fontStyle=1;fontSize=12;arcSize=4;")
@@ -168,7 +170,7 @@ def dc_nodes(p, dc, ox, logical):
             a, b = ids[f"l{first}"], ids[f"l{first + 1}"]
             p.edge(a, b, E_MLAG, "", 1, 0.3, 0, 0.3)
             p.edge(a, b, E_MLAG, "", 1, 0.7, 0, 0.7)
-    fwy = 760 if logical else 690
+    fwy = 890 if logical else 690
     ids["fw"] = p.box(f"<b>marpla-dc-{dc}-fw01</b><br>FW cluster node ({'A' if dc == 1 else 'P'})<br>"
                       f"mgmt 10.30.{dc}9.1 · .1{dc} in zone VLANs", ox + 390, fwy, 220, 60, BASE + FW)
     return ids
@@ -211,40 +213,42 @@ def physical():
 
 
 def logical():
-    p = Page("Logiczna", 2160, 1460)
-    p.box("<b>Dual DC + DCI – topologia logiczna</b> (eBGP underlay + eBGP EVPN, EVPN multi-domain gateway)",
-          20, 15, 1200, 30, TEXT + "fontSize=18;")
+    p = Page("Logiczna", 2160, 1560)
+    p.box("<b>Dual DC + DCI – topologia logiczna, multi-domain</b> (każda strefa = osobna domena EVPN, bramą jest para leafów strefy)",
+          20, 15, 1700, 30, TEXT + "fontSize=18;")
     dcs = {dc: dc_nodes(p, dc, 20 if dc == 1 else 1140, True) for dc in (1, 2)}
     for dc, ids in dcs.items():
         ox = 20 if dc == 1 else 1140
-        p.box(f"<b>EVPN GW domain DC{dc}</b> – all-active multihoming (I-ESI 0000:0000:000{dc}:000{dc}:000{dc}),"
-              f" D-path {'65100:1' if dc == 1 else '65200:2'}",
-              ox + 170, 120, 660, 140, "rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673a6;dashed=1;"
-              "verticalAlign=top;fontSize=11;arcSize=6;")
         for z in ("wew", "priv", "ext"):
             p.edge(ids[z], ids["s1"], E_UND, "", 0.35, 0, 0.3, 1)
             p.edge(ids[z], ids["s2"], E_UND, "", 0.65, 0, 0.7, 1)
             p.edge(ids[z], ids["s1"], E_EVPN, "", 0.25, 0, 0.15, 1)
             p.edge(ids[z], ids["s2"], E_EVPN, "", 0.75, 0, 0.85, 1)
-            p.edge(ids["fw"], ids[z], E_FW, "LACP trunk", None, None, 0.5, 1)
-        p.box("<b>RM-UNDERLAY-TO-LEAFS</b> (out do leafów):<br>loopbacki bram drugiego DC nie trafiają do leafów",
-              ox + 330, 330, 330, 45, TEXT + "fillColor=#fff2cc;strokeColor=#d6b656;spacing=4;fontSize=10;")
-        p.box("VXLAN: leaf ↔ <b>tylko</b> lokalne bramy", ox + 20, 330, 250, 25,
-              TEXT + "fontColor=#2d7600;fontStyle=1;fontSize=11;")
+            p.edge(ids["fw"], ids[z], E_FW, "", None, None, 0.5, 1)
+        p.box("<b>RTC + RM-RTC-LOCAL-ONLY</b>: route server dostaje od pary tylko RT jej strefy<br>"
+              "i wysyła jej tylko trasy jej strefy (członkostwo RT nie przechodzi między domenami)",
+              ox + 250, 300, 500, 45, TEXT + "fillColor=#fff2cc;strokeColor=#d6b656;spacing=4;fontSize=10;")
+        p.box("Route servery znają trasy EVPN stref <b>własnego</b> DC (bez importu); trasy z drugiego DC kończą się na bramie strefy",
+              ox + 20, 360, 960, 25, TEXT + "fontColor=#666666;fontSize=10;")
     a, b = dcs[1], dcs[2]
-    p.edge(a["s2"], b["s1"], E_UND, "eBGP underlay ×4 (/31): tylko Lo0 + VTEP bram<br>PL-DCI-OUT / PL-DCI-IN",
-           1, 0.25, 0, 0.25)
-    p.edge(a["s2"], b["s1"], E_EVPN, "eBGP EVPN multihop Lo0 ↔ Lo0 (2 × 2)<br>EVPN-OVERLAY-CORE · domain remote",
-           1, 0.55, 0, 0.55)
-    p.edge(a["s2"], b["s1"], E_VX, "VXLAN GW ↔ GW: tylko VNI DCI<br>1000110 · 2000210 · 3000310 · 3000399",
-           1, 0.85, 0, 0.85)
-    p.box("<b>Geo-rozciągnięty klaster FW A/P</b> – węzeł A w DC1, węzeł P w DC2; ten sam anycast GW (IP + MAC 00:1c:73:00:dc:99) w obu DC; "
-          "HA po VLAN 399 (L2 przez DCI)", 430, 850, 1300, 40,
-          "rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;dashed=1;fontSize=12;")
-    p.edge(a["fw"], b["fw"], "endArrow=none;html=1;strokeWidth=2;strokeColor=#b85450;dashed=1;", "HA / stretched VLANs przez EVPN GW",
+    p.edge(a["s2"], b["s1"], E_UND, "eBGP underlay ×4 (/31) spine ↔ spine<br>tylko Lo0 + VTEP leafów (PL-DCI-OUT / PL-DCI-IN)",
            1, 0.5, 0, 0.5)
+    ORTHE = E_EVPN + "edgeStyle=orthogonalEdgeStyle;rounded=0;"
+    ORTHV = E_VX + "edgeStyle=orthogonalEdgeStyle;rounded=0;"
+    zinfo = {"wew": (1, "2000210"), "priv": (3, "3000310 · 3000399"), "ext": (5, "1000110")}
+    for k, z in enumerate(("wew", "priv", "ext")):
+        first, vnis = zinfo[z]
+        ga, gb = p.geo[a[z]], p.geo[b[z]]
+        le, lv = 720 + k * 52, 742 + k * 52
+        p.edge(a[z], b[z], ORTHE, f"{z}: eBGP EVPN multihop l0{first}/l0{first + 1} ⇄ l0{first}/l0{first + 1} · domain remote",
+               0.4, 1, 0.4, 1, points=[(ga[0] + ga[2] * 0.4, le), (gb[0] + gb[2] * 0.4, le)])
+        p.edge(a[z], b[z], ORTHV, f"{z}: VXLAN 10.101.2.{first} ⇄ 10.102.2.{first} · VNI {vnis}",
+               0.6, 1, 0.6, 1, points=[(ga[0] + ga[2] * 0.6, lv), (gb[0] + gb[2] * 0.6, lv)])
+    p.box("<b>Geo-rozciągnięty klaster FW A/P</b> – węzeł A w DC1, węzeł P w DC2; ten sam anycast GW (IP + MAC 00:1c:73:00:dc:99) w obu DC; "
+          "HA po VLAN 399 (L2 przez DCI w domenie priv); ruch między strefami tylko przez FW", 330, 995, 1500, 40,
+          "rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;dashed=1;fontSize=12;")
     # legend
-    lx, ly = 20, 1000
+    lx, ly = 20, 1080
     p.box("<b>Legenda</b>", lx, ly, 560, 190, TEXT + "fillColor=#ffffff;strokeColor=#999999;spacing=8;")
     rows = [(E_UND, "eBGP underlay (IPv4 unicast)"), (E_EVPN, "eBGP EVPN overlay"), (E_VX, "tunele VXLAN"),
             (E_FW, "LACP do firewalla"), (E_DCI, "łącze DCI (strona fizyczna)")]
@@ -266,12 +270,13 @@ def logical():
            "<tr><td></td><td></td><td>321 / 322</td><td>3000321 / 3000322</td><td>10.3.21.1 / 10.3.22.1</td><td>lokalne DC1 / DC2</td></tr>"
            "<tr><td></td><td></td><td>399</td><td>3000399</td><td>– (FW HA, L2)</td><td>DC1+DC2 (DCI)</td></tr>"
            "</table>")
-    p.box(tbl, 620, 1000, 820, 260, TEXT + "spacing=8;fillColor=#ffffff;strokeColor=#999999;")
+    p.box(tbl, 620, 1080, 820, 260, TEXT + "spacing=8;fillColor=#ffffff;strokeColor=#999999;")
     p.box("<b>ASN</b><br>DC1: spine'y 65100 · wew 65101 · priv 65102 · ext 65103<br>"
           "DC2: spine'y 65200 · wew 65201 · priv 65202 · ext 65203<br><br>"
           "<b>Pule</b><br>Lo0 spine 10.10{dc}.0.0/24 · Lo0 leaf 10.10{dc}.1.0/24<br>"
-          "VTEP leaf 10.10{dc}.2.0/24 · VTEP GW 10.10{dc}.3.0/24<br>uplinki 10.10{dc}.10.0/24 · DCI 10.100.0.0/29",
-          1480, 1000, 420, 190, TEXT + "fillColor=#ffffff;strokeColor=#999999;spacing=8;")
+          "VTEP leaf 10.10{dc}.2.0/24 · uplinki 10.10{dc}.10.0/24 · DCI 10.100.0.0/29<br><br>"
+          "<b>Bramy</b>: pary leafów stref (MLAG, wspólny VTEP), bez D-path/ES – pętle blokuje AS path pary",
+          1480, 1080, 420, 230, TEXT + "fillColor=#ffffff;strokeColor=#999999;spacing=8;")
     return p
 
 
@@ -310,21 +315,21 @@ def routing_page(dc, sc):
             short = peer.replace(f"marpla-dc-", "dc")
             kind = "DCI " if e["description"].startswith("DCI_") else ""
             links.append(f"{kind}Et{ifname[8:]} {e['ip_address']} ⇄ {short} Et{pif[8:]} {pip}")
-        spines[i] = p.box(f"<b>{h}</b> · AS {asn(h)}<br>Lo0 {lo(h, 'Loopback0')} · VTEP {lo(h, 'Loopback1')}"
+        spines[i] = p.box(f"<b>{h}</b> · AS {asn(h)}<br>Lo0 {lo(h, 'Loopback0')} · bez VTEP, bez VRF"
                           f"<br><b>EVPN Route Server</b> dla leafów DC{dc} (next-hop-unchanged)"
-                          f"<br><b>+ EVPN Gateway</b> → DC{other}<br><font style='font-size:10px'>" + "<br>".join(links) + "</font>",
+                          f"<br>+ tranzyt underlay DCI<br><font style='font-size:10px'>" + "<br>".join(links) + "</font>",
                           x, 190, 340, 205, BASE + GW + "align=left;spacingLeft=6;verticalAlign=top;")
         p.box("RS", x + 310, 175, 44, 30, "ellipse;whiteSpace=wrap;html=1;fillColor=#9673a6;strokeColor=#ffffff;"
               "fontColor=#ffffff;fontStyle=1;fontSize=13;")
     # remote gateways
-    p.box(f"DC{other} – zdalna domena EVPN", 1640, 60, 440, 800, DCBOX)
+    p.box(f"DC{other} – spine'y (tranzyt DCI)", 1640, 60, 440, 800, DCBOX)
     remote = {}
     for i, y in ((1, 200), (2, 480)):
         h = f"marpla-dc-{other}-s0{i}"
         dl = [f"DCI Et{ifn[8:]} {e['ip_address']} ⇄ {e['description'].split('_')[1].replace('marpla-dc-', 'dc')}"
               for ifn, e in sorted(eth(h).items()) if e["description"].startswith("DCI_")]
-        remote[i] = p.box(f"<b>{h}</b> · AS {asn(h)}<br>Lo0 {lo(h, 'Loopback0')} · VTEP {lo(h, 'Loopback1')}"
-                          f"<br>RS DC{other} + EVPN Gateway<br><font style='font-size:10px'>" + "<br>".join(dl) + "</font>",
+        remote[i] = p.box(f"<b>{h}</b> · AS {asn(h)}<br>Lo0 {lo(h, 'Loopback0')}"
+                          f"<br>RS DC{other} + tranzyt DCI<br><font style='font-size:10px'>" + "<br>".join(dl) + "</font>",
                           1720, y, 340, 95, BASE + GW + "align=left;spacingLeft=6;")
     # DCI links (orthogonal, above the spines, then down the right side)
     ORTH = E_DCI + "edgeStyle=orthogonalEdgeStyle;rounded=0;"
@@ -346,10 +351,11 @@ def routing_page(dc, sc):
             col_x = 1660 + 12 * k
             p.edge(spines[i], remote[j], ORTH, "", sx, 0, 0, ty, points=[(x0 + w0 * sx, lvl[k]), (col_x, lvl[k]), (col_x, yr + hr * ty)], lpos=0)
     core = "<br>".join(
-        f"{pre}s0{i} ⇄ " + ", ".join(n["ip_address"] for n in sc[f"{pre}s0{i}"]["router_bgp"]["neighbors"]
-                                     if n.get("peer_group") == "EVPN-OVERLAY-CORE") for i in (1, 2))
-    p.box(f"<b>EVPN-OVERLAY-CORE</b><br>eBGP EVPN multihop (TTL 15), Lo0 ↔ Lo0<br><i>domain remote</i>, D-path<br>{core}"
-          f"<br><br><b>DCI underlay</b>: tylko Lo0 + VTEP bram<br>PL-DCI-OUT / PL-DCI-IN",
+        f"{z}: l0{f}/l0{f + 1} ⇄ " + ", ".join(n["ip_address"] for n in sc[f"{pre}{z}-l0{f}"]["router_bgp"]["neighbors"]
+                                              if n.get("peer_group") == "EVPN-OVERLAY-CORE")
+        for z, f in (("wew", 1), ("priv", 3), ("ext", 5)))
+    p.box(f"<b>EVPN-OVERLAY-CORE per strefa</b><br>eBGP EVPN multihop (TTL 15) Lo0 ↔ Lo0<br>między parami tej samej strefy, <i>domain remote</i><br>{core}"
+          f"<br><br><b>DCI underlay</b>: tylko Lo0 + VTEP leafów<br>PL-DCI-OUT / PL-DCI-IN",
           1660, 620, 400, 200, TEXT + "fillColor=#ffffff;strokeColor=#9673a6;spacing=6;")
     # leaf pairs
     zones = [("wew", 1), ("priv", 3), ("ext", 5)]
@@ -369,7 +375,7 @@ def routing_page(dc, sc):
                 spi = eth(sp)[f"Ethernet{n}"]
                 ups.append((up, e, si, sp, spi))
             leaf[h] = p.box(f"<b>{h}</b> · AS {asn(h)}<br>Lo0 {lo(h, 'Loopback0')} · VTEP {lo(h, 'Loopback1')}"
-                            f"<br>EVPN → RS s01, s02<br><font style='font-size:10px'>"
+                            f"<br>EVPN → RS s01, s02 · <b>GW</b> → dc{other}-{z}<br><font style='font-size:10px'>"
                             + "<br>".join(f"Et{up[-1]} {e['ip_address'].split('/')[0]} ⇄ s0{si} Et{n} {spi['ip_address'].split('/')[0]}"
                                           for up, e, si, sp, spi in ups) + "</font>",
                             zx + 10 + j * 245, 600, 235, 95, BASE + f"fillColor=#ffffff;strokeColor={stroke};align=left;spacingLeft=6;")
@@ -384,8 +390,8 @@ def routing_page(dc, sc):
         rows.append((a, "Vlan4094 MLAG", vl(a, "Vlan4094"), b, "Vlan4094", vl(b, "Vlan4094")))
         rows.append((a, "Vlan4093 iBGP", vl(a, "Vlan4093"), b, "Vlan4093", vl(b, "Vlan4093")))
     p.box("Leafy: eBGP underlay po /31 do obu spine'ów (IPv4-UNDERLAY-PEERS) + eBGP EVPN Lo0 ↔ Lo0 do obu RS "
-          "(EVPN-OVERLAY-PEERS, multihop 3). Spine'y wysyłają do leafów underlay przez RM-UNDERLAY-TO-LEAFS "
-          f"(bez loopbacków bram DC{other}).", 40, 465, 1540, 40, TEXT + "fontSize=11;fontColor=#0050ef;")
+          f"(EVPN-OVERLAY-PEERS, multihop 3) + jako brama strefy eBGP EVPN multihop do pary tej samej strefy w DC{other} "
+          "(EVPN-OVERLAY-CORE). RTC z RM-RTC-LOCAL-ONLY: para ogłasza tylko RT swojej strefy.", 40, 465, 1540, 40, TEXT + "fontSize=11;fontColor=#0050ef;")
     # P2P table
     for i in (1, 2):
         h = f"{pre}s0{i}"
@@ -401,10 +407,10 @@ def routing_page(dc, sc):
     p.box("<b>Gdzie są RR?</b><br>Overlay jest eBGP, więc zamiast iBGP route reflectorów rolę „RR” pełnią "
           "<b>route servery EVPN</b> – spine'y każdego DC (purpurowe, znaczek RS). Leafy mają sesje EVPN tylko do nich; "
           "RS przekazują trasy bez zmiany next-hopa (next-hop-unchanged), więc tunele VXLAN idą leaf ↔ leaf w obrębie DC.<br><br>"
-          "Ten sam spine jest też <b>EVPN Gateway</b>: trasy z drugiego DC ogłasza leafom z next-hopem = własny VTEP, "
-          "więc leafy nie tunelują do drugiego DC.<br><br>"
+          "Spine'y <b>nie są</b> bramami: każda strefa ma własną bramę – swoją parę leafów – i własne sesje EVPN przez DCI "
+          "do pary tej samej strefy w drugim DC. Tunele VXLAN przez DCI idą para ↔ para tej samej strefy.<br><br>"
           f"<b>Pule DC{dc}</b>: Lo0 spine 10.10{dc}.0.0/24 · Lo0 leaf 10.10{dc}.1.0/24 · VTEP leaf 10.10{dc}.2.0/24 · "
-          f"VTEP GW 10.10{dc}.3.0/24 · uplinki 10.10{dc}.10.0/24 (wszystkie P2P to /31) · MLAG 10.10{dc}.20.0/24 · MLAG L3 10.10{dc}.21.0/24 · DCI 10.100.0.0/29",
+          f"uplinki 10.10{dc}.10.0/24 (wszystkie P2P to /31) · MLAG 10.10{dc}.20.0/24 · MLAG L3 10.10{dc}.21.0/24 · DCI 10.100.0.0/29",
           960, 890, 640, 300, TEXT + "spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;")
     return p
 
@@ -415,19 +421,20 @@ def rdrt_page(sc):
           20, 15, 1700, 30, TEXT + "fontSize=18;")
     # --- route propagation chain (live trace) ---
     p.box("<b>Przykład:</b> trasa type-2 MAC/IP węzła FW DC1 (10.3.10.11, MAC 001c.7331.18f2) w VLAN 310 / strefa priv – "
-          "RT nie zmienia się na całej ścieżce, zmieniają się RD i next-hop na bramach", 20, 60, 2100, 30, TEXT + "fontSize=13;")
+          "przez DCI idzie wprost między bramami strefy priv (parami leafów); RT bez zmian, RD domain remote = RD bramy", 20, 60, 2100, 30, TEXT + "fontSize=13;")
     steps = [
-        ("dc1-priv-l03 (+ l04)", "leaf, AS 65102", "origin (Local)",
-         "RD 10.101.1.3:310 (l04: 10.101.1.4:310)<br>RT 310:310 (MAC-VRF) + 30:30 (VRF PRIV)<br>NH 10.101.2.3 (VTEP MLAG)", ZONE["priv"]),
-        ("dc1-s01 / s02", "RS + EVPN GW, AS 65100", "re-origination → domain remote",
-         "lokalnie: przekazuje bez zmian (next-hop-unchanged)<br>do DC2: <b>RD 10.101.0.1:310</b> (s02: 10.101.0.2:310)<br>"
-         "RT 310:310 + 30:30<br><b>NH 10.101.3.1</b> (VTEP bramy)", ("#e1d5e7", "#9673a6")),
-        ("dc2-s01 / s02", "RS + EVPN GW, AS 65200", "re-origination → domain local",
-         "odbiera jako <i>remote</i> (RD 10.101.0.x:310)<br>do leafów DC2: <b>RD 10.102.0.1:310</b> (s02: 10.102.0.2:310)<br>"
-         "RT 310:310 + 30:30<br><b>NH 10.102.3.1</b>", ("#e1d5e7", "#9673a6")),
-        ("dc2-priv-l03 / l04", "leaf, AS 65202", "import",
-         "widzi tylko RD bram DC2 (10.102.0.1:310, 10.102.0.2:310)<br>import po RT 310:310 → VLAN 310, 30:30 → VRF PRIV<br>"
-         "NH 10.102.3.1 / 10.102.3.2 – tunel VXLAN tylko do bram DC2", ZONE["priv"]),
+        ("dc1-priv-l03 (+ l04)", "leaf + EVPN GW strefy priv, AS 65102", "origin (Local) + re-origination → domain remote",
+         "lokalnie: RD 10.101.1.3:310 (l04: 10.101.1.4:310)<br>RT 310:310 (MAC-VRF) + 30:30 (VRF PRIV)<br>NH 10.101.2.3 (VTEP MLAG)<br>"
+         "do DC2: <b>domain remote, RD 10.101.1.3:310</b>, ten sam NH", ZONE["priv"]),
+        ("dc1-s01 / s02", "EVPN route server DC1, AS 65100", "tylko domena lokalna DC1",
+         "trzyma trasę z RD 10.101.1.x:310 (next-hop-unchanged)<br>nie jest bramą – trasa do DC2 <b>nie</b> idzie przez spine'y<br>"
+         "(spine'y przenoszą tylko underlay DCI)", ("#f5f5f5", "#666666")),
+        ("dc2-priv-l03 / l04", "leaf + EVPN GW strefy priv, AS 65202", "odbiór z domain remote + import",
+         "odbiera <b>bezpośrednio</b> od dc1-priv-l03/l04 (EVPN-OVERLAY-CORE)<br>jako <i>remote</i>, RD 10.101.1.3:310 / 10.101.1.4:310<br>"
+         "import po RT 310:310 → VLAN 310, 30:30 → VRF PRIV<br>NH 10.101.2.3 – tunel VXLAN wprost do pary priv DC1", ZONE["priv"]),
+        ("dc2-s01 / s02", "EVPN route server DC2, AS 65200", "nie dostaje trasy z DC1",
+         "zna tylko trasy stref DC2 (np. FW DC2: RD 10.102.1.3:310)<br>trasa z DC1 kończy się na bramie strefy priv DC2<br>"
+         "(sprawdzone: show bgp evpn na dc2-s01)", ("#f5f5f5", "#666666")),
     ]
     prev = None
     for i, (name, role, what, body, (fill, stroke)) in enumerate(steps):
@@ -435,11 +442,10 @@ def rdrt_page(sc):
                   BASE + f"fillColor={fill};strokeColor={stroke};align=left;spacingLeft=8;verticalAlign=top;")
         if prev:
             p.edge(prev, b, "endArrow=classic;html=1;strokeWidth=3;strokeColor=#2d7600;",
-                   ["eBGP EVPN<br>EVPN-OVERLAY-PEERS", "eBGP EVPN multihop<br>EVPN-OVERLAY-CORE<br>(DCI)", "eBGP EVPN<br>EVPN-OVERLAY-PEERS"][i - 1])
+                   ["eBGP EVPN<br>EVPN-OVERLAY-PEERS<br>(lokalnie)", "eBGP EVPN multihop<br>EVPN-OVERLAY-CORE<br>l03/l04 ⇄ l03/l04", "nie wysyła<br>do RS DC2"][i - 1])
         prev = b
     # --- RT table ---
-    s1 = sc["marpla-dc-1-s01"]["router_bgp"]
-    gw_vlans = {v["id"] for v in s1["vlans"]}
+    gw_vlans = {v["id"] for c in sc.values() for v in c["router_bgp"].get("vlans", []) if v.get("rd_evpn_domain")}
     rows, vrfs = [], {}
     for h, c in sc.items():
         for v in c["router_bgp"].get("vrfs", []):
@@ -452,15 +458,15 @@ def rdrt_page(sc):
     zone_of_vlan = lambda vid: {"1": "ext", "2": "wew", "3": "priv"}[str(vid)[0]]
     for vrf in ("EXT", "WEW", "PRIV"):
         rows.append(f"<tr style='background:#f0f0f0'><td><b>{vrf.lower()}</b></td><td>VRF {vrf} (IP-VRF, type-5)</td><td>{vrf_vni[vrf]}</td>"
-                    f"<td><b>{vrfs[vrf]}</b></td><td>{vrfs[vrf]}</td><td>wszystkie leafy strefy + bramy</td></tr>")
+                    f"<td><b>{vrfs[vrf]}</b></td><td>{vrfs[vrf]} (type-5 inter-domain)</td><td>pary strefy w DC1 i DC2</td></tr>")
         for vid in sorted(k for k in vx if zone_of_vlan(k) == vrf.lower()):
             dci = vid in gw_vlans
             rows.append(f"<tr><td></td><td>VLAN {vid} (MAC-VRF, type-2/3)</td><td>{vx[vid]}</td><td><b>{vid}:{vid}</b></td>"
                         f"<td>{f'{vid}:{vid}' if dci else '– (nie idzie przez DCI)'}</td>"
-                        f"<td>{'leafy strefy w DC1 + DC2, bramy' if dci else ('tylko DC1' if str(vid)[2] == '1' else 'tylko DC2')}</td></tr>")
+                        f"<td>{'pary strefy w DC1 + DC2 (przez DCI)' if dci else ('tylko DC1 (evpn_l2_multi_domain: false)' if str(vid)[2] == '1' else 'tylko DC2 (evpn_l2_multi_domain: false)')}</td></tr>")
     p.box("<b>Route Targets</b> – identyczne w DC1 i DC2 (te same definicje tenantów), unikalne per strefa"
           "<table border='1' cellpadding='3' style='border-collapse:collapse;font-size:11px;margin-top:6px'>"
-          "<tr><th>strefa</th><th>instancja</th><th>VNI</th><th>RT (import/export)</th><th>RT evpn domain remote (bramy)</th><th>gdzie</th></tr>"
+          "<tr><th>strefa</th><th>instancja</th><th>VNI</th><th>RT (import/export)</th><th>RT evpn domain remote (bramy = pary strefy)</th><th>gdzie</th></tr>"
           + "".join(rows) + "</table>", 20, 300, 1080, 560, TEXT + "spacing=8;fillColor=#ffffff;strokeColor=#999999;")
     # --- explanation ---
     p.box("<b>Jak są budowane</b><br>"
@@ -469,15 +475,18 @@ def rdrt_page(sc):
           "• <b>RT MAC-VRF</b> = &lt;VLAN&gt;:&lt;VLAN&gt;, <b>RT IP-VRF</b> = &lt;vrf_id&gt;:&lt;vrf_id&gt;<br>"
           "&nbsp;&nbsp;(mac_vrf_id_base: 0 – 7-cyfrowe VNI nie zmieściłyby się w RD typu IP:liczba)<br>"
           "• RD jest unikalny per urządzenie (Lo0), RT wspólny dla całej strefy w obu DC<br><br>"
-          "<b>Bramy (spine'y)</b><br>"
-          "• <code>rd evpn domain remote</code> = ten sam &lt;Lo0&gt;:&lt;id&gt; – RD tras ogłaszanych do drugiego DC<br>"
+          "<b>Bramy = pary leafów stref</b><br>"
+          "• <code>rd evpn domain remote</code> = ten sam &lt;Lo0&gt;:&lt;VLAN&gt; – RD tras ogłaszanych do pary strefy w drugim DC<br>"
           "• <code>route-target import export evpn domain remote</code> = ten sam RT – tylko VLAN-y DCI: 110, 210, 310, 399<br>"
-          "• type-5 (IP-VRF) przechodzi przez <i>next-hop-self … inter-domain</i> z RT VRF-u<br>"
-          "• domain identifier (D-path): DC1 <b>65100:1</b>, DC2 <b>65200:2</b> – zapobiega zapętleniu tras między domenami<br>"
-          "• all-active multihoming bram: ES DC1 0000:0000:0001:0001:0001, ES-import RT 00:00:00:01:00:01;<br>"
-          "&nbsp;&nbsp;DC2 0000:0000:0002:0002:0002, ES-import RT 00:00:00:02:00:02<br><br>"
-          "<b>Separacja stref</b>: leaf importuje tylko RT swojej strefy, więc VRF-y innych stref nie dostają tras. "
-          "Bez RTC (gałąź <i>single-domain</i>) trasy innych stref nadal docierają do tablicy BGP leafa – nie są tylko importowane.",
+          "&nbsp;&nbsp;(VLAN-y lokalne: evpn_l2_multi_domain: false – bez domain remote)<br>"
+          "• type-5 (IP-VRF) przez <i>next-hop-self … inter-domain</i> z RT VRF-u<br>"
+          "• bez D-path i bez Ethernet Segment bram (para MLAG = wspólny VTEP); powrót trasy do domeny lokalnej "
+          "blokuje AS path drugiego leafa pary<br><br>"
+          "<b>RT Constraint</b>: para ogłasza route serverom i bramom drugiego DC tylko członkostwo, które sama generuje "
+          "(RM-RTC-LOCAL-ONLY, AS path ^$) – RT swojej strefy. Bez tego członkostwo 0/0 route serverów jednego DC "
+          "przechodziłoby przez bramy do drugiego DC i route servery wysyłałyby leafom trasy wszystkich stref.<br><br>"
+          "<b>Separacja stref</b>: tablica BGP EVPN leafa zawiera tylko trasy jego strefy; przez DCI każda strefa ma własne "
+          "sesje EVPN i własne tunele VXLAN. Route servery znają trasy wszystkich stref własnego DC (bez importu).",
           1130, 300, 1000, 560, TEXT + "spacing=8;fillColor=#fff2cc;strokeColor=#d6b656;")
     # --- RD per device ---
     drows = []
@@ -487,7 +496,7 @@ def rdrt_page(sc):
         mac = ", ".join(f"{v['rd']}" for v in b.get("vlans", []))
         ip = ", ".join(f"{v['name']} {v['rd']}" for v in b.get("vrfs", []))
         rem = ", ".join(v["rd_evpn_domain"]["rd"] for v in b.get("vlans", []) if v.get("rd_evpn_domain"))
-        role = "RS + GW" if h.split("-")[3].startswith("s") else "leaf " + h.split("-")[3]
+        role = "route server" if h.split("-")[3].startswith("s") else "leaf + GW " + h.split("-")[3]
         drows.append(f"<tr><td>{h}</td><td>{role}</td><td>{lo0}</td><td>{mac}</td><td>{ip}</td><td>{rem or '–'}</td></tr>")
     p.box("<b>Route Distinguishers per urządzenie</b>"
           "<table border='1' cellpadding='3' style='border-collapse:collapse;font-size:10px;margin-top:6px'>"

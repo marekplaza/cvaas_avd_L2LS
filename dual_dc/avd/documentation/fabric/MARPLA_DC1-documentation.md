@@ -106,7 +106,6 @@
 | VTEP Loopback Pool | Available Addresses | Assigned addresses | Assigned Address % |
 | ------------------ | ------------------- | ------------------ | ------------------ |
 | 10.101.2.0/24 | 256 | 6 | 2.35 % |
-| 10.101.3.0/24 | 256 | 2 | 0.79 % |
 
 ### VTEP Loopback Node allocation
 
@@ -116,7 +115,5 @@
 | marpla-DC1-POD1 | marpla-dc-1-ext-l06 | 10.101.2.5/32 |
 | marpla-DC1-POD1 | marpla-dc-1-priv-l03 | 10.101.2.3/32 |
 | marpla-DC1-POD1 | marpla-dc-1-priv-l04 | 10.101.2.3/32 |
-| marpla-DC1-POD1 | marpla-dc-1-s01 | 10.101.3.1/32 |
-| marpla-DC1-POD1 | marpla-dc-1-s02 | 10.101.3.2/32 |
 | marpla-DC1-POD1 | marpla-dc-1-wew-l01 | 10.101.2.1/32 |
 | marpla-DC1-POD1 | marpla-dc-1-wew-l02 | 10.101.2.1/32 |

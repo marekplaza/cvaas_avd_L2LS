@@ -1,24 +1,15 @@
 ---
 # Settings common to both data centers
 
-# Spines are EVPN route servers for their own DC *and* EVPN multi-domain
-# gateways towards the other DC. A gateway must be a VTEP, so the default
-# spine node type is extended with VTEP and network services (VLANs/VRFs).
-custom_node_type_keys:
-  - key: spine
-    type: spine
-    default_evpn_role: server
-    vtep: true
-    network_services:
-      l2: true
-      l3: true
-    cv_tags_topology_type: spine
+# Multi-domain (variant A): spines use the default AVD spine node type -
+# EVPN route servers for their own DC and underlay transit for the DCI, no VTEP,
+# no VRFs. Every zone's MLAG leaf pair is the EVPN gateway of that zone.
 
 p2p_uplinks_mtu: 9214
 
 # BGP Route Target Constraint (RFC 4684) on the EVPN overlay: every peer
-# announces the RTs it imports, so a route server only sends a leaf the EVPN
-# routes of the leaf's own zone. Gateways import all zones and still get all.
+# announces the RTs it imports, so a route server only sends a leaf pair the
+# EVPN routes of its own zone, and gateway pairs only exchange their zone's RTs.
 evpn_overlay_bgp_rtc: true
 
 generate_cv_tags:

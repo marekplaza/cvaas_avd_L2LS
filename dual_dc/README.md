@@ -1,4 +1,4 @@
-# Dual DC + DCI (EVPN multi-domain gateway)
+# Dual DC + DCI – multi-domain (bramy EVPN per strefa)
 
 Dwa ośrodki (DC1, DC2) z niezależnym underlayem i overlayem, połączone przez DCI między spine'ami.
 Każdy ośrodek ma 2 spine'y i 3 pary MLAG leafów – po jednej na strefę bezpieczeństwa `wew`, `priv`, `ext`.
@@ -9,15 +9,15 @@ Do każdej pary leafów w obu ośrodkach podłączony jest węzeł geo-rozciągn
 | Element | Realizacja |
 |---|---|
 | Underlay w DC | eBGP, spine ↔ leaf |
-| Overlay w DC | eBGP EVPN, spine'y jako route servery |
+| Overlay w DC | eBGP EVPN, spine'y jako route servery (domyślny typ węzła AVD: bez VTEP, bez VRF-ów) |
 | ASN | DC1: spine'y 65100, pary leafów 65101 (wew), 65102 (priv), 65103 (ext); DC2: 65200, 65201–65203 |
-| DCI underlay | 4 łącza /31 spine ↔ spine (pełna siatka 2×2), eBGP; prefix-listy `PL-DCI-IN/OUT` przepuszczają **tylko loopbacki bram** (Lo0 i VTEP Lo1 spine'ów) |
-| DCI overlay | eBGP EVPN multihop między bramami (`EVPN-OVERLAY-CORE`, `domain remote`) |
-| Bramy EVPN | spine'y są VTEP-ami i bramami multi-domain (`evpn_gateway`, L2 + L3 inter-domain); dwie bramy ośrodka działają jako all-active multihoming (I-ESI) z D-path |
-| Izolacja | leafy tunelują VXLAN tylko do bram własnego ośrodka; brama ponownie ogłasza trasy z drugiego DC jako swoje (next-hop-self) |
-| RT Constraint | `evpn_overlay_bgp_rtc: true` – `address-family rt-membership` na sesjach EVPN; leaf dostaje tylko trasy EVPN swojej strefy (route servery `default-route-target only`) |
-| Filtr w stronę leafów | `RM-UNDERLAY-TO-LEAFS` (out na `IPv4-UNDERLAY-PEERS` spine'ów) nie przepuszcza loopbacków bram drugiego DC – zostają na bramach |
-| VNI przez DCI | tylko VLAN-y z tagiem `dci` (konfigurowane na bramach): 110, 210, 310, 399 |
+| Bramy EVPN | **para leafów każdej strefy** (`evpn_gateway` na `node_group`, L2 + L3 inter-domain); każda strefa = osobna domena EVPN |
+| DCI overlay | eBGP EVPN multihop para ↔ para tej samej strefy (`EVPN-OVERLAY-CORE`, `domain remote`) – osobne sesje dla wew, priv, ext |
+| DCI underlay | 4 łącza /31 spine ↔ spine (pełna siatka 2×2), eBGP; prefix-listy `PL-DCI-IN/OUT` przepuszczają **tylko loopbacki leafów** (Lo0 i VTEP) |
+| Izolacja | tunele VXLAN przez DCI tylko para ↔ para tej samej strefy; spine'y nie mają VXLAN ani VRF-ów |
+| RT Constraint | `evpn_overlay_bgp_rtc: true` + `RM-RTC-LOCAL-ONLY` (out w `rt-membership`): brama ogłasza tylko członkostwo, które sama generuje – inaczej `0/0` route serverów przechodziłoby przez DCI |
+| VNI przez DCI | L2 tylko 110, 210, 310, 399 – VLAN-y lokalne mają `evpn_l2_multi_domain: false`; L3 (type-5) wszystkich podsieci strefy |
+| D-path / ES | brak – AVD generuje je tylko z all-active multihoming (niedostępne z MLAG); pętlę blokuje AS path pary |
 | Anycast gateway | ten sam IP i MAC (`00:1c:73:00:dc:99`) w obu ośrodkach |
 
 ## Strefy, VLAN-y i VNI
@@ -39,10 +39,10 @@ L2VNI = baza strefy + VLAN ID (`ext` 100xxxx, `wew` 200xxxx, `priv` 300xxxx).
 
 | Hostname | Rola | Mgmt IP | Tagi CloudVision |
 |---|---|---|---|
-| marpla-dc-1-s01 / s02 | spine + brama EVPN DC1 | 10.30.11.1 / .2 | owner:marpla |
-| marpla-dc-1-wew-l01 / l02 | leaf MLAG, strefa wew | 10.30.12.1 / .2 | owner:marpla, dmz:wew |
-| marpla-dc-1-priv-l03 / l04 | leaf MLAG, strefa priv | 10.30.12.3 / .4 | owner:marpla, dmz:priv |
-| marpla-dc-1-ext-l05 / l06 | leaf MLAG, strefa ext | 10.30.12.5 / .6 | owner:marpla, dmz:ext |
+| marpla-dc-1-s01 / s02 | spine, route server EVPN DC1 | 10.30.11.1 / .2 | owner:marpla |
+| marpla-dc-1-wew-l01 / l02 | leaf MLAG + brama EVPN strefy wew | 10.30.12.1 / .2 | owner:marpla, dmz:wew |
+| marpla-dc-1-priv-l03 / l04 | leaf MLAG + brama EVPN strefy priv | 10.30.12.3 / .4 | owner:marpla, dmz:priv |
+| marpla-dc-1-ext-l05 / l06 | leaf MLAG + brama EVPN strefy ext | 10.30.12.5 / .6 | owner:marpla, dmz:ext |
 | marpla-dc-2-* | lustrzane odbicie DC1 | 10.30.21.x / 10.30.22.x | jw. |
 | marpla-dc-1-fw01 / marpla-dc-2-fw01 | węzły klastra FW (cEOS jako host, poza AVD/CVaaS) | 10.30.19.1 / 10.30.29.1 | – |
 
@@ -77,16 +77,14 @@ oczekiwane wartości są brane z wygenerowanych przez AVD `structured_configs`, 
 
 | Urządzenia | Test ANTA | Co sprawdza |
 |---|---|---|
-| wszystkie | `VerifyBGPPeerSession`, `VerifyBGPPeerCount` | wszystkie sesje BGP Established; liczba peerów EVPN i IPv4 |
-| wszystkie | `VerifyVxlanVniBinding` | dokładnie te VNI, które powinny być (na bramach tylko VNI przez DCI) |
-| bramy | `VerifyBgpRouteMaps` | route-mapy DCI (in/out) i `RM-UNDERLAY-TO-LEAFS` w stronę leafów |
-| bramy | `VerifyBGPExchangedRoutes` | przez DCI ogłaszane/odbierane są loopbacki bram (Lo0 + VTEP) |
-| bramy | `VerifyVxlanVtep` | VTEP-y = lokalne pary leafów + bramy drugiego DC (nic więcej) |
-| leafy | `VerifyVxlanVtep` | VTEP-y = **tylko** bramy własnego DC – brak tuneli do leafów drugiego DC |
-| bramy, leafy | `VerifyEVPNType5Routes` | podsieci lokalne drugiego DC docierają jako type-5 przez bramy |
-| wszystkie | `VerifyBGPPeerCount` (`rt-membership`) | sesje RTC: 2 na leafie, 8 na bramie |
+| wszystkie | `VerifyBGPPeerSession`, `VerifyBGPPeerCount` | wszystkie sesje BGP Established; liczba peerów EVPN, rt-membership i IPv4 (leaf: 2 RS + 2 bramy tej samej strefy w drugim DC) |
+| spine'y | `VerifyBgpRouteMaps` | route-mapy DCI (in/out) |
+| spine'y | `VerifyBGPExchangedRoutes` | przez DCI ogłaszane/odbierane są loopbacki leafów (Lo0 + VTEP), z obu łączy |
+| leafy | `VerifyVxlanVtep` | jedyny zdalny VTEP = para tej samej strefy w drugim DC |
+| leafy | `VerifyVxlanVniBinding` | tylko VNI strefy |
+| leafy | `VerifyEVPNType5Routes` | podsieć lokalna tej samej strefy z drugiego DC dociera jako type-5 |
 | leafy | `VerifyEVPNRoutesMatchImportedRT` (własny, `avd/anta_custom/marpla_tests.py`) | każda ścieżka EVPN w tablicy BGP ma RT strefy leafa – brak tras innych stref |
-| bramy, leafy | `VerifyEVPNType2Route` | MAC/IP węzła FW z drugiego DC w rozciągniętym VLAN-ie (wymaga ruchu – dlatego `make test` najpierw uruchamia `fw_test`) |
+| leafy | `VerifyEVPNType2Route` | MAC/IP węzła FW z drugiego DC w rozciągniętym VLAN-ie (wymaga ruchu – dlatego `make test` najpierw uruchamia `fw_test`) |
 
 `make fw_test` (`fw_test.sh`) z każdego węzła FW, w każdej strefie: ping anycast GW (VLAN rozciągnięty
 i lokalny), ping drugiego węzła FW przez DCI oraz ping po VLAN-ie HA 399. Wynik PASS/FAIL per cel.

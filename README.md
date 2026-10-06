@@ -1,44 +1,65 @@
-# Dual DC + DCI – EVPN multi-domain gateway z RT Constraint
+# Dual DC + DCI – multi-domain: każda strefa jest osobną domeną EVPN
 
-> **Gałąź `single-domain-with-rtc`** – dwa ośrodki ze wspólnymi bramami EVPN dla wszystkich stref
-> bezpieczeństwa **oraz BGP Route Target Constraint (RFC 4684)**: leaf dostaje w płaszczyźnie
-> sterowania wyłącznie trasy EVPN swojej strefy.
+> **Gałąź `multi-domain`** – wariant A: bramą EVPN każdej strefy bezpieczeństwa jest **jej własna para
+> leafów**. Każda strefa ma osobne sesje EVPN i osobne tunele VXLAN przez DCI, a spine'y są już tylko
+> route serverami EVPN i tranzytem underlay – bez VTEP-a i bez VRF-ów stref.
 
 | Gałąź | Zawartość |
 |---|---|
 | `main` | lab jednego DC (L2LS, EVPN MLAG) + CVaaS |
 | `dualDCandDCI` | gałąź rozwojowa dual DC – stan bez RTC z pełną dokumentacją (draw.io) |
-| `single-domain` | dual DC, wspólne bramy, **bez RTC** – strefy rozdzielone tylko VRF/RT |
-| **`single-domain-with-rtc`** | **ta gałąź**: jak `single-domain` + RT Constraint |
+| `single-domain` | dual DC, wspólne bramy (spine'y) dla wszystkich stref, bez RTC |
+| `single-domain-with-rtc` | jak `single-domain` + RT Constraint |
+| **`multi-domain`** | **ta gałąź**: bramy per strefa na parach leafów, osobne domeny EVPN, RTC |
 
-## Co wyróżnia tę gałąź
+## Czym różni się od wariantów single-domain
 
-W `single-domain` strefy są rozdzielone tylko w tablicach routingu (osobne VRF-y i route-targety),
-ale route servery EVPN (spine'y) wysyłają każdemu leafowi trasy **wszystkich** stref – leaf odrzuca je
-dopiero przy imporcie. Tu każdy leaf ogłasza po `address-family rt-membership`, które RT importuje,
-a route server wysyła mu tylko pasujące trasy:
+| | `single-domain` | `single-domain-with-rtc` | **`multi-domain`** |
+|---|---|---|---|
+| brama EVPN | spine'y, wspólne dla wszystkich stref | spine'y, wspólne | **para leafów każdej strefy** |
+| spine'y | RS + VTEP + VRF-y wszystkich stref | jak obok | **tylko route server + tranzyt DCI** (bez VTEP i VRF) |
+| sesje EVPN przez DCI | 4 (spine ↔ spine), wszystkie strefy | jak obok | **osobne per strefa** (para ↔ para tej samej strefy) |
+| tunele VXLAN przez DCI | brama ↔ brama | jak obok | **para ↔ para tej samej strefy** |
+| tablica EVPN leafa | trasy wszystkich stref | tylko jego strefa | tylko jego strefa |
+| gdzie strefy się spotykają | bramy + tablice leafów | bramy (spine'y) | **tylko route servery własnego DC** (bez importu, bez VRF) |
 
-```yaml
-# dual_dc/avd/group_vars/MARPLA_DCS.yml
-evpn_overlay_bgp_rtc: true
+Awaria, zmiana albo pomyłka konfiguracyjna w jednej strefie dotyczy wyłącznie jej pary leafów i jej sesji
+DCI – pozostałe strefy mają własne bramy, sesje i tunele.
+
+![Płaszczyzna sterowania multi-domain](dual_dc/docs/control-plane.png)
+
+### Co pokazuje lab (`marpla-dc-1-priv-l03`)
+
+```
+marpla-dc-1-priv-l03# show bgp evpn summary
+  Description              Neighbor   V AS     ... State   PfxRcd PfxAcc PfxAdv
+  marpla-dc-1-s01_Loopback 10.101.0.1 4 65100  ... Estab   0      0      10
+  marpla-dc-1-s02_Loopback 10.101.0.2 4 65100  ... Estab   0      0      10
+  marpla-dc-2-priv-l03     10.102.1.3 4 65202  ... Estab   7      7      7
+  marpla-dc-2-priv-l04     10.102.1.4 4 65202  ... Estab   7      7      7
+
+marpla-dc-1-priv-l03# show vxlan vtep
+10.102.2.3       unicast, flood
+Total number of remote VTEPS:  1
+
+marpla-dc-1-priv-l03# show bgp evpn extcommunity rt 210:210 route-type mac-ip
+          Network                Next Hop              Metric  LocPref Weight  Path
 ```
 
-| | bez RTC (`single-domain`) | z RTC (ta gałąź) |
-|---|---|---|
-| ścieżki EVPN w tablicy BGP `marpla-dc-1-priv-l03` | 144, z czego 104 wyłącznie z RT stref ext/wew | **40**, każda z RT strefy priv |
-| ścieżki EVPN `marpla-dc-2-ext-l05` | 150, z czego 116 obcych | **34** |
-| bramy (spine'y) | wszystkie strefy | wszystkie strefy – z założenia obsługują DCI dla każdej |
+- Sesje EVPN: 2 route servery DC1 i **tylko** para priv z DC2 (`EVPN-OVERLAY-CORE`, `domain remote`).
+- Od route serverów leaf dostaje 0 prefiksów – jest jedyną parą priv w DC1; wszystkie trasy swojej strefy
+  dostaje bezpośrednio od pary priv DC2.
+- Jedyny zdalny VTEP to para priv w DC2 (`10.102.2.3`) – tunel VXLAN para ↔ para.
+- Trasy strefy wew (`RT 210:210`) w ogóle do leafa priv nie docierają.
 
-Bramy pozostają jedynym miejscem, gdzie spotykają się wszystkie strefy (nadal rozdzielone VRF-ami);
-pełne rozdzielenie także tam wymagałoby osobnych bram/DCI per strefa.
-
-![Płaszczyzna sterowania z RTC](dual_dc/docs/control-plane.png)
+| Urządzenie | ścieżki EVPN z RT w tablicy BGP |
+|---|---|
+| `marpla-dc-1-priv-l03` | 46 – wszystkie strefy priv |
+| `marpla-dc-1-wew-l01` | 37 – wszystkie strefy wew |
+| `marpla-dc-2-ext-l05` | 37 – wszystkie strefy ext |
+| `marpla-dc-1-s01` (route server) | 52 – trasy trzech stref, ale tylko z DC1; nie ma VXLAN ani VRF-ów stref |
 
 ### Które RT należą do której strefy
-
-Route-targety są takie same w DC1 i DC2. RT VRF-u (`<vrf_id>:<vrf_id>`) niosą trasy type-5 (prefiksy IP)
-i – razem z RT VLAN-u – trasy type-2 MAC/IP; RT VLAN-u (`<VLAN>:<VLAN>`) niosą trasy type-2/type-3 danego segmentu L2.
-Ostatnia część RD trasy (`<Lo0>:<VLAN>` lub `<Lo0>:<vrf_id>`) wskazuje ten sam numer, więc strefę widać od razu po RD.
 
 | Strefa | RT VRF (L3VNI) | RT VLAN-ów |
 |---|---|---|
@@ -46,62 +67,34 @@ Ostatnia część RD trasy (`<Lo0>:<VLAN>` lub `<Lo0>:<vrf_id>`) wskazuje ten sa
 | `wew` | `20:20` – VRF WEW (2009000) | `210:210` FW, rozciągnięty · `221:221` lokalny DC1 · `222:222` lokalny DC2 |
 | `priv` | `30:30` – VRF PRIV (3009000) | `310:310` FW, rozciągnięty · `321:321` lokalny DC1 · `322:322` lokalny DC2 · `399:399` FW HA |
 
-Leaf strefy `priv` importuje więc tylko `30:30`, `310:310`, `321:321` (DC1) / `322:322` (DC2) i `399:399`.
+RD trasy kończy się tym samym numerem (`<Lo0>:<VLAN>` / `<Lo0>:<vrf_id>`), więc strefę widać po RD.
 
-### Naoczny przykład: leaf strefy `priv` – `marpla-dc-1-priv-l03`
+### Pułapka RT Constraint w multi-domain (i jak ją rozwiązano)
 
-Pytamy leaf strefy **priv** o trasy MAC/IP z RT **`210:210`**, czyli VLAN-u 210 strefy **wew**.
+Samo `evpn_overlay_bgp_rtc: true` tu **nie wystarcza**. Route servery ogłaszają leafom członkostwo
+„wyślij mi wszystko” (`0/0`, `default-route-target only`). Brama strefy przekazywała je przez sesję core do
+bramy w drugim DC, a ta – do swoich route serverów, które uznawały, że leaf chce tras wszystkich stref
+(zmierzone: leaf ext miał 124 ze 161 ścieżek z innych stref). Wyłączenie RTC na sesjach core też nie pomaga –
+router z peerem bez RTC musi sam ogłaszać `0/0`.
 
-**Bez RTC** (gałąź `single-domain`) – leaf priv ma w tablicy BGP trasy obcej strefy (12 ścieżek), m.in.:
-
-```
-marpla-dc-1-priv-l03# show bgp evpn extcommunity rt 210:210 route-type mac-ip
-          Network                Next Hop              Metric  LocPref Weight  Path
- * >Ec    RD: 10.101.1.1:210 mac-ip 001c.7331.18f2 10.2.10.11
-                                 10.101.2.1            -       100     0       65100 65101 i
- * >      RD: 10.101.0.1:210 mac-ip 001c.73fa.4797 10.2.10.12
-                                 10.101.3.1            -       100     0       65100 65200 65201 i
- (...)
-```
-
-- `RD 10.101.1.1:210`, AS path `65100 65101` – FW DC1 (`10.2.10.11`) nauczony na parze **wew** w DC1 (leaf `wew-l01`, Lo0 10.101.1.1), przekazany przez route server DC1.
-- `RD 10.101.0.1:210`, AS path `65100 65200 65201` – FW DC2 (`10.2.10.12`) ze strefy **wew** DC2, ponownie ogłoszony przez bramę `dc1-s01`.
-
-**Z RTC** (ta gałąź) – to samo zapytanie zwraca pustą tablicę, trasy strefy wew w ogóle nie docierają do leafa priv:
+Rozwiązanie: brama ogłasza tylko członkostwo, które **sama generuje** (pusty AS path) – RT swojej strefy:
 
 ```
-marpla-dc-1-priv-l03# show bgp evpn extcommunity rt 210:210 route-type mac-ip
-          Network                Next Hop              Metric  LocPref Weight  Path
-marpla-dc-1-priv-l03#
+ip as-path access-list AS-RTC-LOCAL permit ^$ any
+route-map RM-RTC-LOCAL-ONLY permit 10
+   match as-path AS-RTC-LOCAL
+router bgp 65102
+   address-family rt-membership
+      neighbor EVPN-OVERLAY-PEERS route-map RM-RTC-LOCAL-ONLY out
+      neighbor EVPN-OVERLAY-CORE route-map RM-RTC-LOCAL-ONLY out
 ```
 
-Cała tablica EVPN leafa (`show bgp evpn`) zawiera teraz wyłącznie trasy strefy priv – RD kończą się na
-`:310`, `:321`, `:399` (VLAN-y priv) i `:30` (VRF PRIV) – plus trasy Ethernet Segment bram:
-
-```
-marpla-dc-1-priv-l03# show bgp evpn domain local
- * >      RD: 10.101.3.1:1 auto-discovery 0000:0000:0001:0001:0001          <- ES bram DC1 (all-active)
- * >      RD: 10.101.1.3:310 mac-ip 001c.7331.18f2 10.3.10.11                <- FW DC1, VLAN 310 (lokalnie)
- * >      RD: 10.101.0.1:310 mac-ip 001c.73fa.4797 10.3.10.12                <- FW DC2 przez bramę dc1-s01
- * >      RD: 10.101.0.1:399 mac-ip 001c.73fa.4797                           <- FW DC2, VLAN HA 399
- * >      RD: 10.101.0.1:310 imet 10.101.3.1                                 <- flood list VLAN 310: brama
- * >Ec    RD: 10.102.1.3:30 ip-prefix 10.3.22.0/24                           <- VLAN lokalny DC2 priv (type-5)
- (...)
-marpla-dc-1-priv-l03# show bgp evpn domain remote
-          Network                Next Hop              Metric  LocPref Weight  Path
-marpla-dc-1-priv-l03#
-```
-
-Leaf nie ma też żadnych tras „domain remote” – trasy z DC2 dostaje już jako lokalne, z next-hopem bram DC1
-(`10.101.3.1` / `10.101.3.2`). Pełne zrzuty: [dual_dc/ku pamieci zrzuty z tablic evpn](<dual_dc/ku pamieci zrzuty z tablic evpn>).
-
+(AVD nie ma klucza na route-mapę w `address_family_rtc`, więc te dwie linie są w `raw_eos_cli` per para.)
 
 ## Topologia
 
-Dwa ośrodki z niezależnym underlayem (eBGP) i overlayem (eBGP EVPN). Każdy ma 2 spine'y (route servery
-EVPN i bramy EVPN multi-domain) oraz 3 pary MLAG leafów – po jednej na strefę `wew`, `priv`, `ext`.
-DCI to 4 łącza /31 między spine'ami. Do każdej strefy w obu ośrodkach podłączony jest węzeł
-geo-rozciągniętego klastra firewall A/P.
+Fizycznie bez zmian względem wariantów single-domain: dwa ośrodki, po 2 spine'y i 3 pary MLAG leafów
+(`wew`, `priv`, `ext`), DCI = 4 łącza /31 między spine'ami, węzeł klastra FW A/P w każdym DC.
 
 ![Topologia fizyczna](dual_dc/docs/topology-physical.png)
 
@@ -112,27 +105,27 @@ geo-rozciągniętego klastra firewall A/P.
 | Element | Wartość |
 |---|---|
 | ASN | DC1: spine'y 65100, pary leafów 65101 (wew) / 65102 (priv) / 65103 (ext); DC2: 65200, 65201–65203 |
-| Underlay DCI | eBGP po 4 × /31, prefix-listy `PL-DCI-IN/OUT` – tylko Lo0 + VTEP bram |
-| Overlay DCI | eBGP EVPN multihop Lo0 ↔ Lo0 między bramami, `domain remote`, D-path 65100:1 / 65200:2 |
-| Bramy | spine'y = VTEP + EVPN GW (L2 + L3 inter-domain), all-active multihoming (I-ESI), bez MLAG |
-| Filtr do leafów | `RM-UNDERLAY-TO-LEAFS` – loopbacki bram drugiego DC zostają na bramach |
-| Przez DCI | tylko VNI: 1000110, 2000210, 3000310, 3000399 |
-| L2VNI | baza strefy + VLAN: ext 100xxxx, wew 200xxxx, priv 300xxxx |
-| VRF / L3VNI / RT | EXT 1009000 / 10:10 · WEW 2009000 / 20:20 · PRIV 3009000 / 30:30 |
-| RD / RT VLAN | RD `<Lo0>:<VLAN>`, RT `<VLAN>:<VLAN>`; VRF: RD `<Lo0>:<vrf_id>` |
+| Spine'y | domyślny typ węzła AVD: route server EVPN (next-hop-unchanged), bez VTEP, bez VRF-ów |
+| Bramy | `evpn_gateway` na `node_group` każdej strefy – EVPN L2 + L3 inter-domain, `remote_peers` = para tej samej strefy w drugim DC |
+| Overlay DCI | eBGP EVPN multihop Lo0 ↔ Lo0 para ↔ para (`EVPN-OVERLAY-CORE`, `domain remote`), osobno dla każdej strefy |
+| Underlay DCI | eBGP po 4 × /31 spine ↔ spine, prefix-listy `PL-DCI-IN/OUT` – tylko Lo0 + VTEP leafów |
+| Przez DCI (L2) | tylko VNI 1000110, 2000210, 3000310, 3000399; VLAN-y lokalne mają `evpn_l2_multi_domain: false` |
+| Przez DCI (L3) | type-5 VRF-ów stref (`next-hop-self … inter-domain`) – podsieci lokalne drugiego DC osiągalne routingiem |
+| D-path / ES | brak – AVD generuje je tylko z all-active multihoming (niedostępne z MLAG); pętlę blokuje AS path drugiego leafa pary |
+| RTC | `evpn_overlay_bgp_rtc: true` + `RM-RTC-LOCAL-ONLY` na bramach (opis wyżej) |
+| L2VNI / RT | baza strefy + VLAN (ext 100xxxx, wew 200xxxx, priv 300xxxx); RT `<VLAN>:<VLAN>`, VRF 10:10 / 20:20 / 30:30 |
 | Anycast GW | ten sam IP i MAC `00:1c:73:00:dc:99` w obu DC |
-| RTC | `address-family rt-membership` na sesjach EVPN; route servery `default-route-target only` |
 | Tagi CloudVision | `owner:marpla`, `dmz:<strefa>`; hierarchia `marpla-DCx` → `marpla-DCx-POD1` → rack = para leafów |
 
 Pełny opis (VLAN-y, adresacja, okablowanie, pliki): [dual_dc/README.md](dual_dc/README.md);
-diagram edytowalny ze stronami P2P i RD/RT: [dual_dc/topology.drawio](dual_dc/topology.drawio).
+diagram edytowalny (fizyczny, logiczny, P2P per DC, RD i RT ze ścieżką trasy): [dual_dc/topology.drawio](dual_dc/topology.drawio).
 
 ## Uruchomienie
 
 ```bash
 cd dual_dc
 make start        # containerlab: 18 × cEOS 4.35.6M, sieć mgmt 10.30.0.0/16
-make build        # AVD (DC1 i DC2 jako osobne fabrici) + katalog testów DCI
+make build        # AVD (DC1 i DC2 jako osobne fabrici) + katalog testów multi-domain
 make deploy_cvp   # przez CVaaS, change control zatwierdzany i uruchamiany automatycznie – albo: make deploy (eAPI)
 make test         # fw_test + ANTA: katalogi AVD i testy BGP/EVPN/DCI/RTC
 make test_dci     # fw_test + tylko testy BGP/EVPN/DCI/RTC
@@ -143,32 +136,33 @@ Obraz cEOS: `./get_ceos.sh -v 4.35.6M` (wymaga `ARISTA_TOKEN`). Raporty ANTA: `d
 
 ## Wyniki testów
 
-Uruchomione 2026-10-06 na labie z wdrożoną konfiguracją tej gałęzi (`make test`).
+Uruchomione 2026-10-06 na labie z wdrożoną konfiguracją tej gałęzi (`make deploy_cvp`, potem `make test`).
 
-**`fw_test`** – 20/20 celów osiągalnych: z obu węzłów FW anycast GW w każdej strefie (VLAN rozciągnięty
-i lokalny), drugi węzeł FW przez DCI w każdej strefie oraz VLAN HA 399.
+**`fw_test`** – 20/20: z obu węzłów FW anycast GW w każdej strefie (VLAN rozciągnięty i lokalny),
+drugi węzeł FW przez DCI w każdej strefie oraz VLAN HA 399.
 
-**Testy BGP/EVPN/DCI/RTC** (`dual_dc/avd/anta_catalogs/dci_tests.yml`) – **116/116**:
+**Testy multi-domain** (`dual_dc/avd/anta_catalogs/dci_tests.yml`) – **100/100**:
 
 | Test | Wynik | Co potwierdza |
 |---|---|---|
-| `VerifyBGPPeerSession`, `VerifyBGPPeerCount` | 32/32 | wszystkie sesje BGP; liczba peerów EVPN, IPv4 i **rt-membership** (2 na leafie, 8 na bramie) |
+| `VerifyBGPPeerSession`, `VerifyBGPPeerCount` | 32/32 | wszystkie sesje; leaf: 4 EVPN (2 RS + 2 bramy tej samej strefy w drugim DC), 4 rt-membership, 3 IPv4; spine: 6 EVPN, 8 IPv4 |
+| `VerifyVxlanVtep` | 12/12 | jedyny zdalny VTEP leafa = para tej samej strefy w drugim DC |
+| `VerifyVxlanVniBinding` | 12/12 | na parze tylko VNI jej strefy |
 | `VerifyEVPNRoutesMatchImportedRT` (własny test) | 12/12 | tablica BGP EVPN leafa zawiera tylko trasy z RT jego strefy |
-| `VerifyVxlanVtep` | 16/16 | leafy tunelują tylko do bram własnego DC |
-| `VerifyVxlanVniBinding` | 16/16 | przez DCI idą tylko wybrane VNI |
-| `VerifyEVPNType5Routes`, `VerifyEVPNType2Route` | 32/32 | trasy przechodzą przez bramy między DC |
-| `VerifyBgpRouteMaps`, `VerifyBGPExchangedRoutes` | 8/8 | DCI wymienia tylko loopbacki bram, filtr do leafów działa |
+| `VerifyEVPNType5Routes`, `VerifyEVPNType2Route` | 24/24 | podsieć lokalna i FW drugiego DC docierają przez bramę strefy |
+| `VerifyBgpRouteMaps`, `VerifyBGPExchangedRoutes` | 8/8 | route-mapy DCI; przez DCI wymieniane są loopbacki leafów (oba łącza, ECMP) |
 
-Bez RTC (kontrola negatywna) 28 testów RTC było czerwonych – testy faktycznie wykrywają brak filtrowania.
+Przed poprawką RTC (bez `RM-RTC-LOCAL-ONLY`) test `VerifyEVPNRoutesMatchImportedRT` był czerwony na wszystkich
+12 leafach – to on wykrył opisaną wyżej pułapkę.
 
-**Pełny `make test`** (katalogi AVD + DCI) – 512 testów: **468 OK, 44 znane odstępstwa**, wszystkie
+**Pełny `make test`** (katalogi AVD + multi-domain) – 492 testy: **448 OK, 44 znane odstępstwa**, wszystkie
 wynikające ze środowiska cEOS lub z projektu, nie z błędu konfiguracji:
 
 | Test | Liczba | Przyczyna |
 |---|---|---|
 | `VerifyLoggingErrors` | 16 | cEOS-lab loguje przy starcie `HARDWARE-0-SYSTEM_IDENTIFICATION_FAILED` |
 | `VerifyInterfaceDiscards` | 16 | odrzucane pakiety na `Management1` (sieć zarządzania Dockera) |
-| `VerifyVxlanConfigSanity` | 12 | VLAN-y lokalne (x21/x22) istnieją tylko na jednej parze leafów, więc ich flood list jest pusta – EOS raportuje to jako ostrzeżenie; VLAN-y rozciągnięte mają poprawną flood list (bramy) |
+| `VerifyVxlanConfigSanity` | 12 | VLAN-y lokalne (x21/x22) istnieją tylko na jednej parze leafów, więc ich flood list jest pusta – EOS raportuje to jako ostrzeżenie |
 
 Pozostałe kategorie (BGP, MLAG, routing, STP, łączność, system, konfiguracja) – bez błędów.
 
