@@ -1,5 +1,5 @@
 ### sigle-domain bez RTC:
-
+marpla-dc-1-priv-l03# sh bgp evpn extcommunity rt 210:210 route-type mac-ip
 BGP routing table information for VRF default
 Router identifier 10.101.1.3, local AS number 65102
 Route status codes: * - valid, > - active, S - Stale, E - ECMP head, e - ECMP
