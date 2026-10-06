@@ -31,6 +31,59 @@ wszystkie z RT własnej strefy). Bramy w obu wariantach znają wszystkie strefy,
 
 ![Płaszczyzna sterowania bez RTC](dual_dc/docs/control-plane.png)
 
+### Które RT należą do której strefy
+
+Route-targety są takie same w DC1 i DC2. RT VRF-u (`<vrf_id>:<vrf_id>`) niosą trasy type-5 (prefiksy IP)
+i – razem z RT VLAN-u – trasy type-2 MAC/IP; RT VLAN-u (`<VLAN>:<VLAN>`) niosą trasy type-2/type-3 danego segmentu L2.
+Ostatnia część RD trasy (`<Lo0>:<VLAN>` lub `<Lo0>:<vrf_id>`) wskazuje ten sam numer, więc strefę widać od razu po RD.
+
+| Strefa | RT VRF (L3VNI) | RT VLAN-ów |
+|---|---|---|
+| `ext` | `10:10` – VRF EXT (1009000) | `110:110` FW, rozciągnięty · `121:121` lokalny DC1 · `122:122` lokalny DC2 |
+| `wew` | `20:20` – VRF WEW (2009000) | `210:210` FW, rozciągnięty · `221:221` lokalny DC1 · `222:222` lokalny DC2 |
+| `priv` | `30:30` – VRF PRIV (3009000) | `310:310` FW, rozciągnięty · `321:321` lokalny DC1 · `322:322` lokalny DC2 · `399:399` FW HA |
+
+Leaf strefy `priv` importuje więc tylko `30:30`, `310:310`, `321:321` (DC1) / `322:322` (DC2) i `399:399`.
+
+### Naoczny przykład: leaf strefy `priv` – `marpla-dc-1-priv-l03`
+
+Pytamy leaf strefy **priv** o trasy MAC/IP z RT **`210:210`**, czyli VLAN-u 210 strefy **wew**.
+Na tej gałęzi (bez RTC) leaf priv ma je w tablicy BGP – 12 ścieżek obcej strefy:
+
+```
+marpla-dc-1-priv-l03# show bgp evpn extcommunity rt 210:210 route-type mac-ip
+          Network                Next Hop              Metric  LocPref Weight  Path
+ * >Ec    RD: 10.101.1.1:210 mac-ip 001c.7331.18f2
+                                 10.101.2.1            -       100     0       65100 65101 i
+ * >Ec    RD: 10.101.1.1:210 mac-ip 001c.7331.18f2 10.2.10.11
+                                 10.101.2.1            -       100     0       65100 65101 i
+ * >Ec    RD: 10.101.1.2:210 mac-ip 001c.7331.18f2 10.2.10.11
+                                 10.101.2.1            -       100     0       65100 65101 i
+ * >      RD: 10.101.0.1:210 mac-ip 001c.73fa.4797 10.2.10.12
+                                 10.101.3.1            -       100     0       65100 65200 65201 i
+ * >      RD: 10.101.0.2:210 mac-ip 001c.73fa.4797 10.2.10.12
+                                 10.101.3.2            -       100     0       65100 65200 65201 i
+ (...)
+```
+
+- `RD 10.101.1.1:210` / `10.101.1.2:210`, AS path `65100 65101` – FW DC1 (`10.2.10.11`) nauczony na parze **wew**
+  w DC1 (leafy `wew-l01`/`wew-l02`, VTEP 10.101.2.1), przekazany leafowi priv przez route server DC1.
+- `RD 10.101.0.1:210` / `10.101.0.2:210`, AS path `65100 65200 65201` – FW DC2 (`10.2.10.12`) ze strefy **wew** DC2,
+  ponownie ogłoszony przez bramy DC1.
+
+Żadna z tych tras nie trafia do tablic routingu – leaf priv nie ma VLAN-u 210 ani VRF-u WEW, więc nie importuje
+RT `210:210` ani `20:20`. Są jednak w jego **płaszczyźnie sterowania** – tak samo trasy strefy ext (`110:110`, `10:10` …).
+
+Na gałęzi `single-domain-with-rtc` (RT Constraint) to samo zapytanie zwraca **pustą tablicę**, a cała tablica EVPN
+leafa priv zawiera tylko RD/RT strefy priv (`:310`, `:321`, `:399`, `:30`) i trasy Ethernet Segment bram:
+
+```
+marpla-dc-1-priv-l03# show bgp evpn extcommunity rt 210:210 route-type mac-ip
+          Network                Next Hop              Metric  LocPref Weight  Path
+marpla-dc-1-priv-l03#
+```
+
+
 ## Topologia
 
 Dwa ośrodki z niezależnym underlayem (eBGP) i overlayem (eBGP EVPN). Każdy ma 2 spine'y (route servery
