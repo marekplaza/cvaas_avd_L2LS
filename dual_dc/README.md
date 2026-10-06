@@ -15,6 +15,7 @@ Do każdej pary leafów w obu ośrodkach podłączony jest węzeł geo-rozciągn
 | DCI overlay | eBGP EVPN multihop między bramami (`EVPN-OVERLAY-CORE`, `domain remote`) |
 | Bramy EVPN | spine'y są VTEP-ami i bramami multi-domain (`evpn_gateway`, L2 + L3 inter-domain); dwie bramy ośrodka działają jako all-active multihoming (I-ESI) z D-path |
 | Izolacja | leafy tunelują VXLAN tylko do bram własnego ośrodka; brama ponownie ogłasza trasy z drugiego DC jako swoje (next-hop-self) |
+| RT Constraint | `evpn_overlay_bgp_rtc: true` – `address-family rt-membership` na sesjach EVPN; leaf dostaje tylko trasy EVPN swojej strefy (route servery `default-route-target only`) |
 | Filtr w stronę leafów | `RM-UNDERLAY-TO-LEAFS` (out na `IPv4-UNDERLAY-PEERS` spine'ów) nie przepuszcza loopbacków bram drugiego DC – zostają na bramach |
 | VNI przez DCI | tylko VLAN-y z tagiem `dci` (konfigurowane na bramach): 110, 210, 310, 399 |
 | Anycast gateway | ten sam IP i MAC (`00:1c:73:00:dc:99`) w obu ośrodkach |
@@ -83,6 +84,8 @@ oczekiwane wartości są brane z wygenerowanych przez AVD `structured_configs`, 
 | bramy | `VerifyVxlanVtep` | VTEP-y = lokalne pary leafów + bramy drugiego DC (nic więcej) |
 | leafy | `VerifyVxlanVtep` | VTEP-y = **tylko** bramy własnego DC – brak tuneli do leafów drugiego DC |
 | bramy, leafy | `VerifyEVPNType5Routes` | podsieci lokalne drugiego DC docierają jako type-5 przez bramy |
+| wszystkie | `VerifyBGPPeerCount` (`rt-membership`) | sesje RTC: 2 na leafie, 8 na bramie |
+| leafy | `VerifyEVPNRoutesMatchImportedRT` (własny, `avd/anta_custom/marpla_tests.py`) | każda ścieżka EVPN w tablicy BGP ma RT strefy leafa – brak tras innych stref |
 | bramy, leafy | `VerifyEVPNType2Route` | MAC/IP węzła FW z drugiego DC w rozciągniętym VLAN-ie (wymaga ruchu – dlatego `make test` najpierw uruchamia `fw_test`) |
 
 `make fw_test` (`fw_test.sh`) z każdego węzła FW, w każdej strefie: ping anycast GW (VLAN rozciągnięty
@@ -101,7 +104,10 @@ Raporty ANTA: `avd/anta/reports/` (poza repo).
 | `avd/group_vars/MARPLA_CONNECTED_ENDPOINTS.yml` | podłączenie węzłów firewall |
 | `avd/group_vars/ZONE_*.yml` | tag `dmz:<strefa>` |
 | `avd/gen_dci_catalog.py`, `avd/anta_catalogs/` | generator i katalog testów BGP/EVPN/DCI |
+| `avd/anta_custom/marpla_tests.py` | własny test ANTA dla RTC |
 | `fw_test.sh` | test płaszczyzny danych z węzłów FW |
+| `docs/*.png`, `tools/gen_png.py` | schematy PNG do README (generator: matplotlib) |
+| `topology.drawio`, `tools/gen_drawio.py` | diagram edytowalny (fizyczny, logiczny, P2P per DC, RD/RT) |
 | `clab/` | topologia, init-configi, numery seryjne `CAFECAFECAFE{dc}1xx` |
 
 Węzły firewall to cEOS bez routingu, z SVI w każdej strefie (`.11` w DC1, `.12` w DC2). Nie emulują
