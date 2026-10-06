@@ -71,7 +71,7 @@ diagram edytowalny ze stronami P2P i RD/RT: [dual_dc/topology.drawio](dual_dc/to
 cd dual_dc
 make start        # containerlab: 18 × cEOS 4.35.6M, sieć mgmt 10.30.0.0/16
 make build        # AVD (DC1 i DC2 jako osobne fabrici) + katalog testów DCI
-make deploy_cvp   # przez CVaaS (zatwierdź change control) – albo: make deploy (eAPI)
+make deploy_cvp   # przez CVaaS, change control zatwierdzany i uruchamiany automatycznie – albo: make deploy (eAPI)
 make test         # fw_test + ANTA: katalogi AVD i testy BGP/EVPN/DCI/RTC
 make test_dci     # fw_test + tylko testy BGP/EVPN/DCI/RTC
 make stop         # po decommission urządzeń w CVaaS
