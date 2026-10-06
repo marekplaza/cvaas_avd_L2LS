@@ -102,6 +102,8 @@ Raporty ANTA: `avd/anta/reports/` (poza repo).
 | `avd/group_vars/ZONE_*.yml` | tag `dmz:<strefa>` |
 | `avd/gen_dci_catalog.py`, `avd/anta_catalogs/` | generator i katalog testów BGP/EVPN/DCI |
 | `fw_test.sh` | test płaszczyzny danych z węzłów FW |
+| `docs/*.png`, `tools/gen_png.py` | schematy PNG do README (generator: matplotlib) |
+| `topology.drawio`, `tools/gen_drawio.py` | diagram edytowalny (fizyczny, logiczny, P2P per DC) |
 | `clab/` | topologia, init-configi, numery seryjne `CAFECAFECAFE{dc}1xx` |
 
 Węzły firewall to cEOS bez routingu, z SVI w każdej strefie (`.11` w DC1, `.12` w DC2). Nie emulują
