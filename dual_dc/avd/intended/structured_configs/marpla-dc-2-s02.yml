@@ -103,6 +103,17 @@ ethernet_interfaces:
     peer_type: l3_interface
   switchport:
     enabled: false
+- name: Ethernet9
+  description: P2P_marpla-dc-2-s01_Ethernet9
+  shutdown: false
+  mtu: 9214
+  ip_address: 10.102.30.1/31
+  metadata:
+    peer: marpla-dc-2-s01
+    peer_interface: Ethernet9
+    peer_type: spine
+  switchport:
+    enabled: false
 hostname: marpla-dc-2-s02
 ip_domain_lookup:
   source_interfaces:
@@ -372,6 +383,18 @@ router_bgp:
     metadata:
       peer: marpla-dc-1-s02
     description: marpla-dc-1-s02
+  - ip_address: 10.102.30.0
+    peer_group: IPv4-UNDERLAY-PEERS
+    remote_as: '65200'
+    metadata:
+      peer: marpla-dc-2-s01
+    description: marpla-dc-2-s01
+  - ip_address: 10.102.0.1
+    remote_as: '65200'
+    description: marpla-dc-2-s01_EVPN_LOCAL_GW
+    update_source: Loopback0
+    send_community: all
+    maximum_routes: 0
   redistribute:
     connected:
       enabled: true
@@ -448,6 +471,9 @@ router_bgp:
       next_hop_self_received_evpn_routes:
         enable: true
         inter_domain: true
+    neighbors:
+    - ip_address: 10.102.0.1
+      activate: true
     peer_groups:
     - name: EVPN-OVERLAY-PEERS
       activate: true

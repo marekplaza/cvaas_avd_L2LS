@@ -10,8 +10,10 @@ What is verified:
     - all BGP sessions up: leaf underlay, leaf EVPN, DCI underlay, EVPN core
     - BGP peer count per address family
     - DCI peers use the DCI route-maps, leaf peers get RM-UNDERLAY-TO-LEAFS
-    - DCI underlay exchanges exactly the gateway loopbacks (Lo0 + VTEP)
-    - VTEP peers = local leaf pairs + remote gateways
+    - DCI underlay exchanges exactly the gateway loopbacks (Lo0 + VTEP) of both
+      gateways of each DC (the peer gateway's loopbacks arrive over the local
+      gateway link, so DCI paths are ECMP - routes are checked as valid only)
+    - VTEP peers = local leaf pairs + the other local gateway + remote gateways
     - only DCI VNIs are configured on the gateway
     - EVPN type-5 routes for the DC-local subnets of both DCs
   leafs
@@ -107,7 +109,8 @@ def main() -> None:
         add("anta.tests.routing.bgp", "VerifyBGPPeerSession", h,
             {"check_tcp_queues": False,
              "bgp_peers": [{"peer_address": n["ip_address"], "vrf": "default"} for n in nbrs]})
-        evpn = [n for n in nbrs if n.get("peer_group", "").startswith("EVPN-OVERLAY")]
+        evpn_af = {n["ip_address"] for n in c.get("router_bgp", {}).get("address_family_evpn", {}).get("neighbors", []) if n.get("activate")}
+        evpn = [n for n in nbrs if n.get("peer_group", "").startswith("EVPN-OVERLAY") or n["ip_address"] in evpn_af]
         ipv4 = [n for n in nbrs if n not in evpn]
         add("anta.tests.routing.bgp", "VerifyBGPPeerCount", h,
             {"address_families": [
@@ -126,16 +129,18 @@ def main() -> None:
             *({"peer_address": n["ip_address"], "vrf": "default",
                "outbound_route_map": "RM-UNDERLAY-TO-LEAFS"} for n in leaf_peers),
         ]})
-        own = [loopback(c, "Loopback0") + "/32", vtep_ip[h] + "/32"]
-        add("anta.tests.routing.bgp", "VerifyBGPExchangedRoutes", h, {"bgp_peers": [
+        def gw_loopbacks(d: int) -> list[str]:
+            return sorted(ip for s in spines if dc_of(s) == d for ip in (loopback(spines[s], "Loopback0") + "/32", vtep_ip[s] + "/32"))
+
+        add("anta.tests.routing.bgp", "VerifyBGPExchangedRoutes", h, {"check_active": False, "bgp_peers": [
             {"peer_address": n["ip_address"], "vrf": "default",
-             "advertised_routes": own,
-             "received_routes": [loopback(spines[owner_of_ip[n["ip_address"]]], "Loopback0") + "/32",
-                                 vtep_ip[owner_of_ip[n["ip_address"]]] + "/32"]}
+             "advertised_routes": gw_loopbacks(dc),
+             "received_routes": gw_loopbacks(dc_of(owner_of_ip[n["ip_address"]]))}
             for n in dci]})
         local_leaf_vteps = {vtep_ip[l] for l in leafs if dc_of(l) == dc}
+        peer_gws = {vtep_ip[s] for s in spines if dc_of(s) == dc and s != h}
         remote_gws = {vtep_ip[s] for s in spines if dc_of(s) != dc}
-        add("anta.tests.vxlan", "VerifyVxlanVtep", h, {"vteps": sorted(local_leaf_vteps | remote_gws)})
+        add("anta.tests.vxlan", "VerifyVxlanVtep", h, {"vteps": sorted(local_leaf_vteps | peer_gws | remote_gws)})
         add("anta.tests.evpn", "VerifyEVPNType5Routes", h, {"prefixes": [
             {"address": f"10.{octet}.2{d}.0/24", "vni": vrf_vni(c, zone.upper())}
             for zone, (_, octet) in ZONES.items() for d in (1, 2)]})

@@ -276,6 +276,7 @@ vlan 399
 | Ethernet6 | P2P_marpla-dc-1-ext-l06_Ethernet2 | - | 10.101.10.22/31 | default | 9214 | False | - | - |
 | Ethernet7 | DCI_marpla-dc-2-s02_Ethernet7 | - | 10.100.0.4/31 | default | 9214 | False | - | - |
 | Ethernet8 | DCI_marpla-dc-2-s01_Ethernet8 | - | 10.100.0.6/31 | default | 9214 | False | - | - |
+| Ethernet9 | P2P_marpla-dc-1-s01_Ethernet9 | - | 10.101.30.1/31 | default | 9214 | False | - | - |
 
 #### Ethernet Interfaces Device Configuration
 
@@ -336,6 +337,13 @@ interface Ethernet8
    mtu 9214
    no switchport
    ip address 10.100.0.6/31
+!
+interface Ethernet9
+   description P2P_marpla-dc-1-s01_Ethernet9
+   no shutdown
+   mtu 9214
+   no switchport
+   ip address 10.101.30.1/31
 ```
 
 ### Loopback Interfaces
@@ -584,6 +592,7 @@ ASN Notation: asplain
 | -------- | --------- | --- | -------- | -------------- | -------------- | ----------------------- | ------------------------- | ---------- | --- | --------------------- | ---------------------- | ------- | ------------ |
 | 10.100.0.5 | 65200 | default | - | - | - | - | - | - | - | - | - | - | - |
 | 10.100.0.7 | 65200 | default | - | - | - | - | - | - | - | - | - | - | - |
+| 10.101.0.1 | 65100 | default | - | all | 0 (no limit) | - | - | - | - | - | - | - | - |
 | 10.101.1.1 | 65101 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
 | 10.101.1.2 | 65101 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
 | 10.101.1.3 | 65102 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
@@ -596,6 +605,7 @@ ASN Notation: asplain
 | 10.101.10.15 | 65102 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
 | 10.101.10.19 | 65103 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
 | 10.101.10.23 | 65103 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
+| 10.101.30.0 | 65100 | default | - | Inherited from peer group IPv4-UNDERLAY-PEERS | Inherited from peer group IPv4-UNDERLAY-PEERS | - | - | - | - | - | - | - | - |
 | 10.102.0.1 | 65200 | default | - | Inherited from peer group EVPN-OVERLAY-CORE | Inherited from peer group EVPN-OVERLAY-CORE | - | - | - | Inherited from peer group EVPN-OVERLAY-CORE | - | - | - | - |
 | 10.102.0.2 | 65200 | default | - | Inherited from peer group EVPN-OVERLAY-CORE | Inherited from peer group EVPN-OVERLAY-CORE | - | - | - | Inherited from peer group EVPN-OVERLAY-CORE | - | - | - | - |
 
@@ -607,6 +617,12 @@ ASN Notation: asplain
 | ---------- | -------- | ------------ | ------------- | ----------- | ------------ | ------------- | ------------------------------ |
 | EVPN-OVERLAY-CORE | True | - | - | - | - | default | - |
 | EVPN-OVERLAY-PEERS | True | - | - | - | - | default | - |
+
+##### EVPN Neighbors
+
+| Neighbor | Activate | Route-map In | Route-map Out | Peer-tag In | Peer-tag Out | Encapsulation | Next-hop-self Source Interface |
+| -------- | -------- | ------------ | ------------- | ----------- | ------------ | ------------- | ------------------------------ |
+| 10.101.0.1 | True | - | - | - | - | default | - |
 
 ##### EVPN DCI Gateway Summary
 
@@ -671,6 +687,11 @@ router bgp 65100
    neighbor 10.100.0.7 description DCI_marpla-dc-2-s01_Ethernet8
    neighbor 10.100.0.7 route-map RM-BGP-10.100.0.7-IN in
    neighbor 10.100.0.7 route-map RM-BGP-10.100.0.7-OUT out
+   neighbor 10.101.0.1 remote-as 65100
+   neighbor 10.101.0.1 update-source Loopback0
+   neighbor 10.101.0.1 description marpla-dc-1-s01_EVPN_LOCAL_GW
+   neighbor 10.101.0.1 send-community
+   neighbor 10.101.0.1 maximum-routes 0
    neighbor 10.101.1.1 peer group EVPN-OVERLAY-PEERS
    neighbor 10.101.1.1 remote-as 65101
    neighbor 10.101.1.1 description marpla-dc-1-wew-l01_Loopback0
@@ -707,6 +728,9 @@ router bgp 65100
    neighbor 10.101.10.23 peer group IPv4-UNDERLAY-PEERS
    neighbor 10.101.10.23 remote-as 65103
    neighbor 10.101.10.23 description marpla-dc-1-ext-l06_Ethernet2
+   neighbor 10.101.30.0 peer group IPv4-UNDERLAY-PEERS
+   neighbor 10.101.30.0 remote-as 65100
+   neighbor 10.101.30.0 description marpla-dc-1-s01
    neighbor 10.102.0.1 peer group EVPN-OVERLAY-CORE
    neighbor 10.102.0.1 remote-as 65200
    neighbor 10.102.0.1 description marpla-dc-2-s01
@@ -747,6 +771,7 @@ router bgp 65100
       neighbor EVPN-OVERLAY-CORE activate
       neighbor EVPN-OVERLAY-CORE domain remote
       neighbor EVPN-OVERLAY-PEERS activate
+      neighbor 10.101.0.1 activate
       domain identifier 65100:1
       domain identifier 65200:2 remote
       neighbor default next-hop-self received-evpn-routes route-type ip-prefix inter-domain

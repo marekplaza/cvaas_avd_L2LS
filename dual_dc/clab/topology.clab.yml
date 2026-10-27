@@ -160,6 +160,9 @@ topology:
     - endpoints: ["marpla-dc-2-fw01:eth4", "marpla-dc-2-priv-l04:eth5"]
     - endpoints: ["marpla-dc-2-fw01:eth5", "marpla-dc-2-ext-l05:eth5"]
     - endpoints: ["marpla-dc-2-fw01:eth6", "marpla-dc-2-ext-l06:eth5"]
+    # Gateway peer links: iBGP IPv4 + local iBGP EVPN between the two gateways of a DC
+    - endpoints: ["marpla-dc-1-s01:eth9", "marpla-dc-1-s02:eth9"]
+    - endpoints: ["marpla-dc-2-s01:eth9", "marpla-dc-2-s02:eth9"]
     # DCI: 4 links between DC1 and DC2 spines
     - endpoints: ["marpla-dc-1-s01:eth7", "marpla-dc-2-s01:eth7"]
     - endpoints: ["marpla-dc-1-s01:eth8", "marpla-dc-2-s02:eth8"]

@@ -61,6 +61,22 @@ spine:
     - name: marpla-dc-2-s01
       id: 1
       mgmt_ip: 10.30.21.1/16
+      # iBGP EVPN to the other gateway of this DC (local domain): both gateways
+      # must see each other's type-1/type-4 routes for the I-ESI DF election.
+      # Not covered by evpn_gateway (remote_peers are domain remote only).
+      structured_config:
+        router_bgp:
+          neighbors:
+            - ip_address: 10.102.0.2
+              remote_as: "65200"
+              update_source: Loopback0
+              send_community: all
+              maximum_routes: 0
+              description: marpla-dc-2-s02_EVPN_LOCAL_GW
+          address_family_evpn:
+            neighbors:
+              - ip_address: 10.102.0.2
+                activate: true
       l3_interfaces:
         - name: Ethernet7
           description: DCI_marpla-dc-1-s01_Ethernet7
@@ -85,6 +101,22 @@ spine:
     - name: marpla-dc-2-s02
       id: 2
       mgmt_ip: 10.30.21.2/16
+      # iBGP EVPN to the other gateway of this DC (local domain): both gateways
+      # must see each other's type-1/type-4 routes for the I-ESI DF election.
+      # Not covered by evpn_gateway (remote_peers are domain remote only).
+      structured_config:
+        router_bgp:
+          neighbors:
+            - ip_address: 10.102.0.1
+              remote_as: "65200"
+              update_source: Loopback0
+              send_community: all
+              maximum_routes: 0
+              description: marpla-dc-2-s01_EVPN_LOCAL_GW
+          address_family_evpn:
+            neighbors:
+              - ip_address: 10.102.0.1
+                activate: true
       l3_interfaces:
         - name: Ethernet7
           description: DCI_marpla-dc-1-s02_Ethernet7
@@ -102,6 +134,21 @@ spine:
           peer_ip: 10.100.0.2
           bgp: *dci_bgp
           structured_config: *dci_mtu
+
+# Direct link between the two gateways of this DC: iBGP IPv4 (same AS) so that
+# they reach each other's loopbacks, used by the local iBGP EVPN session above.
+l3_edge:
+  p2p_links_ip_pools:
+    - name: DC2_GW_PEER
+      ipv4_pool: 10.102.30.0/24
+  p2p_links:
+    - id: 1
+      nodes: [marpla-dc-2-s01, marpla-dc-2-s02]
+      interfaces: [Ethernet9, Ethernet9]
+      ip_pool: DC2_GW_PEER
+      as: ["65200", "65200"]
+      include_in_underlay_protocol: true
+      mtu: 9214
 
 # Underlay over DCI carries only the gateways' loopbacks (router-id + VTEP)
 ipv4_prefix_list_catalog:

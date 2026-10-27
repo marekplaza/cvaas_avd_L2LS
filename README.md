@@ -10,6 +10,38 @@
 | `dualDCandDCI` | gałąź rozwojowa dual DC – ta sama konfiguracja co tutaj + pełna dokumentacja draw.io (strona RD/RT) |
 | **`single-domain`** | **ta gałąź**: dual DC, wspólne bramy, bez RTC |
 | `single-domain-with-rtc` | jak ta gałąź + RT Constraint (leaf dostaje tylko trasy EVPN swojej strefy) |
+| **`single-domain-gw-ibgp`** | **jak `single-domain` + łącze i iBGP między bramami jednego DC – naprawa wyboru DF (niżej)** |
+
+## Gałąź `single-domain-gw-ibgp` – DF bram I-ESI
+
+**Problem (single-domain):** obie bramy jednego DC (s01, s02, AS 65100) nie mają sesji między sobą, a kopia
+ich tras przez leafy lub drugi DC jest odrzucana przez kontrolę pętli AS-path. Żadna brama nie widzi tras
+type-1/type-4 drugiej, więc każda wybiera **siebie** na Designated Forwarder segmentu
+`0000:0000:0001:0001:0001` (w DC2 analogicznie). Dwóch DF w każdym DC = ruch BUM przez DCI powielany.
+
+**Zmiana:**
+
+- łącze `Ethernet9` s01↔s02 w każdym DC (`dual_dc/clab/topology.clab.yml`), w AVD `l3_edge.p2p_links`
+  (`10.101.30.0/31`, `10.102.30.0/31`) z iBGP IPv4 (`as: [65x00, 65x00]`) – bramy widzą nawzajem swoje loopbacki
+- sesja iBGP EVPN Lo0↔Lo0 między bramami w domenie lokalnej – `structured_config` na węzłach spine
+  (`evpn_gateway.remote_peers` tworzy tylko sesje `domain remote`)
+- `gen_dci_catalog.py`: sesje EVPN liczone po aktywacji w AF EVPN; brama ma VTEP drugiej bramy lokalnej;
+  przez DCI loopbacki obu bram DC (ECMP, `check_active: false`)
+
+**Wynik testu (2026-10-27, lab, wdrożenie przez CVaaS):**
+
+| | bez sesji między bramami (symulacja: `neighbor … shutdown`) | z sesją |
+|---|---|---|
+| DF dla VLAN 110/210/310 w DC1 | s01 → `10.101.3.1`, s02 → `10.101.3.2` | obie → `10.101.3.1` |
+| DF dla VLAN 399 w DC1 | j.w. | obie → `10.101.3.2` (modulus rozkłada VLAN-y) |
+| duplikaty pingów FW1 → FW2 po wyczyszczeniu tablic MAC (12 serii × 5) | **177** (+13…15 na serię) | **6** (+1 w co drugiej serii) |
+
+ANTA DCI 104/104, fw_test 20/20, running-config = AVD. Pojedynczy duplikat po sztucznym wyczyszczeniu MAC
+w całej fabryce nie jest jeszcze wyjaśniony. Skrypty i outputy testu: `output/gw-ibgp-test/` (poza repo).
+
+Nowe łącza wymagają przebudowy laba (`make start`) – cEOS nie wykrywa interfejsów dodanych w locie.
+Po przebudowie configlety leafów w CVaaS są bez zmian, więc ich build kończy się `SKIPPED`; trzeba wymusić
+change control (np. tymczasowa linia w configach leafów, deploy, `make build`, deploy).
 
 ## Jak są rozdzielone strefy
 

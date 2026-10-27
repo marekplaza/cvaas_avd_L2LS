@@ -51,6 +51,7 @@
 | l3leaf | marpla-dc-2-priv-l04 | Ethernet2 | spine | marpla-dc-2-s02 | Ethernet4 |
 | spine | marpla-dc-2-s01 | Ethernet1 | l3leaf | marpla-dc-2-wew-l01 | Ethernet1 |
 | spine | marpla-dc-2-s01 | Ethernet2 | l3leaf | marpla-dc-2-wew-l02 | Ethernet1 |
+| spine | marpla-dc-2-s01 | Ethernet9 | spine | marpla-dc-2-s02 | Ethernet9 |
 | spine | marpla-dc-2-s02 | Ethernet1 | l3leaf | marpla-dc-2-wew-l01 | Ethernet2 |
 | spine | marpla-dc-2-s02 | Ethernet2 | l3leaf | marpla-dc-2-wew-l02 | Ethernet2 |
 | l3leaf | marpla-dc-2-wew-l01 | Ethernet3 | mlag_peer | marpla-dc-2-wew-l02 | Ethernet3 |
@@ -78,6 +79,7 @@
 | marpla-dc-2-priv-l04 | Ethernet2 | 10.102.10.15/31 | marpla-dc-2-s02 | Ethernet4 | 10.102.10.14/31 |
 | marpla-dc-2-s01 | Ethernet1 | 10.102.10.0/31 | marpla-dc-2-wew-l01 | Ethernet1 | 10.102.10.1/31 |
 | marpla-dc-2-s01 | Ethernet2 | 10.102.10.4/31 | marpla-dc-2-wew-l02 | Ethernet1 | 10.102.10.5/31 |
+| marpla-dc-2-s01 | Ethernet9 | 10.102.30.0/31 | marpla-dc-2-s02 | Ethernet9 | 10.102.30.1/31 |
 | marpla-dc-2-s02 | Ethernet1 | 10.102.10.2/31 | marpla-dc-2-wew-l01 | Ethernet2 | 10.102.10.3/31 |
 | marpla-dc-2-s02 | Ethernet2 | 10.102.10.6/31 | marpla-dc-2-wew-l02 | Ethernet2 | 10.102.10.7/31 |
 
