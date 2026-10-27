@@ -764,14 +764,14 @@ router bgp 65202
 
 | Interval | Minimum RX | Multiplier |
 | -------- | ---------- | ---------- |
-| 300 | 300 | 3 |
+| 1000 | 1000 | 3 |
 
 #### Router BFD Device Configuration
 
 ```eos
 !
 router bfd
-   multihop interval 300 min-rx 300 multiplier 3
+   multihop interval 1000 min-rx 1000 multiplier 3
 ```
 
 ## Multicast

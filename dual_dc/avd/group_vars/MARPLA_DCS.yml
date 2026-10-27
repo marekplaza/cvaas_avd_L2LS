@@ -16,6 +16,15 @@ custom_node_type_keys:
 
 p2p_uplinks_mtu: 9214
 
+# BFD for the EVPN multihop sessions. The AVD default (300 ms x 3 = 0.9 s) is too
+# tight for cEOS on the shared, heavily loaded lab host: short host stalls caused
+# fabric-wide CtrlTimeout flaps (with both the old and the fixed gateway design).
+# 1 s x 3 = 3 s detection. Lab value - production hardware keeps the default.
+bfd_multihop:
+  interval: 1000
+  min_rx: 1000
+  multiplier: 3
+
 generate_cv_tags:
   topology_hints: true
   device_tags:

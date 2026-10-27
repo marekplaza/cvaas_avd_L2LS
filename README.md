@@ -39,6 +39,23 @@ type-1/type-4 drugiej, więc każda wybiera **siebie** na Designated Forwarder s
 ANTA DCI 104/104, fw_test 20/20, running-config = AVD. Pojedynczy duplikat po sztucznym wyczyszczeniu MAC
 w całej fabryce nie jest jeszcze wyjaśniony. Skrypty i outputy testu: `output/gw-ibgp-test/` (poza repo).
 
+### Flapy BFD – host, nie projekt
+
+Sesje EVPN (BFD multihop, domyślnie w AVD 300 ms × 3) resetowały się okresowo w całej fabryce (`CtrlTimeout`,
+zawsze w 2.–3. sekundzie minuty). Test 2026-10-27/28, za każdym razem 10 min, identyczne obciążenie hosta
+(co ~6 s `clear mac address-table` na 16 urządzeniach + ping FW1 → FW2):
+
+| Warunek | Flapy BFD na leafach | Serie pingów ze stratami |
+|---|---|---|
+| nowy projekt, bez obciążenia testem (25 min) | 0 | – |
+| stary projekt (sesja między bramami wyłączona), BFD 300 × 3 | 2 na leaf | 2 / 93 |
+| nowy projekt, BFD 300 × 3 | 2 na leaf | 7 / 95 |
+| nowy projekt, **BFD 1000 × 3** | **0** | **0 / 100** |
+
+Projekt (podwójny DF) nie wpływa na flapy – przyczyną są chwilowe zatrzymania przeciążonego hosta labu
+(load ~45 na 72 rdzeniach). W `MARPLA_DCS.yml` ustawiono `bfd_multihop` 1000 ms × 3 (wykrycie po 3 s) –
+wartość dla labu; na sprzęcie zostaje domyślne 300 × 3.
+
 Nowe łącza wymagają przebudowy laba (`make start`) – cEOS nie wykrywa interfejsów dodanych w locie.
 Po przebudowie configlety leafów w CVaaS są bez zmian, więc ich build kończy się `SKIPPED`; trzeba wymusić
 change control (np. tymczasowa linia w configach leafów, deploy, `make build`, deploy).

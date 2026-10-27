@@ -205,8 +205,8 @@ route_maps:
     type: permit
 router_bfd:
   multihop:
-    interval: 300
-    min_rx: 300
+    interval: 1000
+    min_rx: 1000
     multiplier: 3
 router_bgp:
   as: '65103'
