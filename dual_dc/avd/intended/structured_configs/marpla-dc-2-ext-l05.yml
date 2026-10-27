@@ -133,6 +133,7 @@ metadata:
       value: marpla
     - name: dmz
       value: ext
+  cv_use_static_config_manifest: true
 mlag_configuration:
   domain_id: dc2-ext
   local_interface: Vlan4094

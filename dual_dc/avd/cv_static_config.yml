@@ -1,0 +1,145 @@
+---
+# CloudVision Static Configuration Studio layout for this lab (cv_deploy manifest, loaded by
+# playbooks/avd_deploy_cvp.yml). All configs live under our own root container instead of the
+# shared flat "AVD Configurations" one:
+#   marpla AVD Configs -> marpla-DCx -> spines / zone wew|priv|ext -> device -> AVD-<hostname>
+# Matching: root owner:marpla, zones dmz:<zone>, each device container device:<serial from clab/sn/>.
+# The DC and "spines" folders use device:* - the topology_hint_* tags cannot be used in Static
+# Configuration Studio queries (they match nothing, devices silently become unmanaged and the
+# workspace build is SKIPPED, so no change control is created).
+# Devices opt in with metadata.cv_use_static_config_manifest (group_vars/MARPLA_DCS.yml).
+cv_static_config_manifest:
+  # keep root containers managed by other manifests in the shared tenant
+  preserve_existing_containers: true
+  configlets:
+    - name: AVD-marpla-dc-1-s01
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-1-s01.cfg"
+    - name: AVD-marpla-dc-1-s02
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-1-s02.cfg"
+    - name: AVD-marpla-dc-1-wew-l01
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-1-wew-l01.cfg"
+    - name: AVD-marpla-dc-1-wew-l02
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-1-wew-l02.cfg"
+    - name: AVD-marpla-dc-1-priv-l03
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-1-priv-l03.cfg"
+    - name: AVD-marpla-dc-1-priv-l04
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-1-priv-l04.cfg"
+    - name: AVD-marpla-dc-1-ext-l05
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-1-ext-l05.cfg"
+    - name: AVD-marpla-dc-1-ext-l06
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-1-ext-l06.cfg"
+    - name: AVD-marpla-dc-2-s01
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-2-s01.cfg"
+    - name: AVD-marpla-dc-2-s02
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-2-s02.cfg"
+    - name: AVD-marpla-dc-2-wew-l01
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-2-wew-l01.cfg"
+    - name: AVD-marpla-dc-2-wew-l02
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-2-wew-l02.cfg"
+    - name: AVD-marpla-dc-2-priv-l03
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-2-priv-l03.cfg"
+    - name: AVD-marpla-dc-2-priv-l04
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-2-priv-l04.cfg"
+    - name: AVD-marpla-dc-2-ext-l05
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-2-ext-l05.cfg"
+    - name: AVD-marpla-dc-2-ext-l06
+      file: "{{ playbook_dir }}/../intended/configs/marpla-dc-2-ext-l06.cfg"
+  containers:
+    - name: marpla AVD Configs
+      description: marpla dual DC + DCI lab (AVD, cv_deploy)
+      tag_query: owner:marpla
+      sub_containers:
+        - name: marpla-DC1
+          tag_query: device:*
+          sub_containers:
+            - name: spines
+              tag_query: device:*
+              sub_containers:
+                - name: marpla-dc-1-s01
+                  tag_query: device:CAFECAFECAFE1101
+                  configlets:
+                    - name: AVD-marpla-dc-1-s01
+                - name: marpla-dc-1-s02
+                  tag_query: device:CAFECAFECAFE1102
+                  configlets:
+                    - name: AVD-marpla-dc-1-s02
+            - name: zone wew
+              tag_query: dmz:wew
+              sub_containers:
+                - name: marpla-dc-1-wew-l01
+                  tag_query: device:CAFECAFECAFE1111
+                  configlets:
+                    - name: AVD-marpla-dc-1-wew-l01
+                - name: marpla-dc-1-wew-l02
+                  tag_query: device:CAFECAFECAFE1112
+                  configlets:
+                    - name: AVD-marpla-dc-1-wew-l02
+            - name: zone priv
+              tag_query: dmz:priv
+              sub_containers:
+                - name: marpla-dc-1-priv-l03
+                  tag_query: device:CAFECAFECAFE1113
+                  configlets:
+                    - name: AVD-marpla-dc-1-priv-l03
+                - name: marpla-dc-1-priv-l04
+                  tag_query: device:CAFECAFECAFE1114
+                  configlets:
+                    - name: AVD-marpla-dc-1-priv-l04
+            - name: zone ext
+              tag_query: dmz:ext
+              sub_containers:
+                - name: marpla-dc-1-ext-l05
+                  tag_query: device:CAFECAFECAFE1115
+                  configlets:
+                    - name: AVD-marpla-dc-1-ext-l05
+                - name: marpla-dc-1-ext-l06
+                  tag_query: device:CAFECAFECAFE1116
+                  configlets:
+                    - name: AVD-marpla-dc-1-ext-l06
+        - name: marpla-DC2
+          tag_query: device:*
+          sub_containers:
+            - name: spines
+              tag_query: device:*
+              sub_containers:
+                - name: marpla-dc-2-s01
+                  tag_query: device:CAFECAFECAFE2101
+                  configlets:
+                    - name: AVD-marpla-dc-2-s01
+                - name: marpla-dc-2-s02
+                  tag_query: device:CAFECAFECAFE2102
+                  configlets:
+                    - name: AVD-marpla-dc-2-s02
+            - name: zone wew
+              tag_query: dmz:wew
+              sub_containers:
+                - name: marpla-dc-2-wew-l01
+                  tag_query: device:CAFECAFECAFE2111
+                  configlets:
+                    - name: AVD-marpla-dc-2-wew-l01
+                - name: marpla-dc-2-wew-l02
+                  tag_query: device:CAFECAFECAFE2112
+                  configlets:
+                    - name: AVD-marpla-dc-2-wew-l02
+            - name: zone priv
+              tag_query: dmz:priv
+              sub_containers:
+                - name: marpla-dc-2-priv-l03
+                  tag_query: device:CAFECAFECAFE2113
+                  configlets:
+                    - name: AVD-marpla-dc-2-priv-l03
+                - name: marpla-dc-2-priv-l04
+                  tag_query: device:CAFECAFECAFE2114
+                  configlets:
+                    - name: AVD-marpla-dc-2-priv-l04
+            - name: zone ext
+              tag_query: dmz:ext
+              sub_containers:
+                - name: marpla-dc-2-ext-l05
+                  tag_query: device:CAFECAFECAFE2115
+                  configlets:
+                    - name: AVD-marpla-dc-2-ext-l05
+                - name: marpla-dc-2-ext-l06
+                  tag_query: device:CAFECAFECAFE2116
+                  configlets:
+                    - name: AVD-marpla-dc-2-ext-l06

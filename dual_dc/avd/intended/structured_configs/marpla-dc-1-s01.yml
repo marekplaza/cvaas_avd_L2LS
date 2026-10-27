@@ -164,6 +164,7 @@ metadata:
       value: spine
     - name: owner
       value: marpla
+  cv_use_static_config_manifest: true
 ntp:
   local_interface:
     name: Management1

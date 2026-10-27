@@ -133,6 +133,7 @@ metadata:
       value: marpla
     - name: dmz
       value: wew
+  cv_use_static_config_manifest: true
 mlag_configuration:
   domain_id: dc1-wew
   local_interface: Vlan4094

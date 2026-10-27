@@ -22,6 +22,11 @@ generate_cv_tags:
     - name: owner
       value: marpla
 
+# Deploy configs into our own Static Configuration Studio tree (cv_static_config.yml)
+# instead of the shared flat "AVD Configurations" container
+custom_structured_configuration_metadata:
+  cv_use_static_config_manifest: true
+
 # Management
 mgmt_gateway: 10.30.0.1
 mgmt_interface_settings:

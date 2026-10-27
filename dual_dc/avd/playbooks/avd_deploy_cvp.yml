@@ -3,6 +3,9 @@
   hosts: MARPLA_DCS
   connection: local
   gather_facts: false
+  # Static Configuration Studio layout: marpla AVD Configs -> DC -> spines/zone -> device
+  vars_files:
+    - ../cv_static_config.yml
   vars:
     cv_server: "{{ lookup('ansible.builtin.env', 'CVURL', default='www.cv-prod-euwest-2.arista.io') }}"
     cv_token: "{{ lookup('ansible.builtin.env', 'CV_API_TOKEN') }}"
