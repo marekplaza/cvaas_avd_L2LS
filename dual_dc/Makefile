@@ -50,3 +50,15 @@ test_dci: ## fw_test + only the BGP/EVPN/DCI tests (avd/anta_catalogs/dci_tests.
 .PHONY: fw_test
 fw_test: ## Data-plane test from both FW nodes: anycast GWs, stretched VLANs and HA VLAN across DCI
 	$(CURRENT_DIR)/fw_test.sh
+
+.PHONY: check_df
+check_df: ## Read-only: both EVPN gateways of a DC agree on the I-ESI DF per stretched VLAN (LABEL=x saves details)
+	$(CURRENT_DIR)/tests/check_df.sh $(LABEL)
+
+.PHONY: dup_test
+dup_test: ## BUM duplicates across the DCI after a MAC flush (ROUNDS=3); clears MAC tables
+	$(CURRENT_DIR)/tests/dup_test.sh $(or $(ROUNDS),3)
+
+.PHONY: soak
+soak: ## Traffic + MAC churn for MIN minutes (default 10), then BFD flaps per device; clears MAC tables
+	$(CURRENT_DIR)/tests/soak.sh $(or $(MIN),10)

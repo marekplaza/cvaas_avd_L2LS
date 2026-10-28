@@ -64,6 +64,9 @@ make deploy_cvp   # wdrożenie przez CVaaS (albo: make deploy - eAPI)
 make test         # fw_test + ANTA: katalogi AVD i testy BGP/EVPN/DCI
 make test_dci     # fw_test + tylko testy BGP/EVPN/DCI
 make fw_test      # tylko test płaszczyzny danych z węzłów FW
+make check_df     # bramy EVPN w DC zgodne co do DF (tylko odczyt; LABEL=x zapisuje szczegóły)
+make dup_test     # duplikaty BUM przez DCI po wyczyszczeniu tablic MAC (ROUNDS=3)
+make soak MIN=10  # ruch + czyszczenie MAC przez MIN minut, potem flapy BFD per urządzenie
 make stop
 ```
 
@@ -90,6 +93,16 @@ i lokalny), ping drugiego węzła FW przez DCI oraz ping po VLAN-ie HA 399. Wyni
 
 Raporty ANTA: `avd/anta/reports/` (poza repo).
 
+Testy bram EVPN i stabilności (`tests/`):
+
+| Cel | Skrypt | Co sprawdza | Stan labu |
+|---|---|---|---|
+| `make check_df` | `tests/check_df.sh` | obie bramy DC wybierają tego samego DF I-ESI dla VLAN-ów 110/210/310/399; stan lokalnej sesji iBGP EVPN między bramami; kod wyjścia ≠ 0 przy MISMATCH | tylko odczyt |
+| `make dup_test` | `tests/dup_test.sh` | FW1 → FW2 przez DCI na 4 VLAN-ach, przed każdą serią czyszczenie MAC (flood unknown unicast); liczy duplikaty. Przy niezgodnym DF ~+15 na serię, przy zgodnym 0 lub sporadycznie +1 | czyści tablice MAC |
+| `make soak MIN=10` | `tests/soak.sh` | ruch FW1 → FW2 pod ciągłym czyszczeniem MAC przez MIN minut, potem zdarzenia BFD Up→Down per urządzenie, podsumowanie pingów i max BFD Rx interval; kod ≠ 0 przy flapie lub stracie | czyści tablice MAC, obciąża host |
+
+`check_df.sh <label>` zapisuje szczegóły do `tests/results/<label>/` (poza repo).
+
 ## Pliki
 
 | Plik | Zawartość |
@@ -102,6 +115,7 @@ Raporty ANTA: `avd/anta/reports/` (poza repo).
 | `avd/group_vars/ZONE_*.yml` | tag `dmz:<strefa>` |
 | `avd/gen_dci_catalog.py`, `avd/anta_catalogs/` | generator i katalog testów BGP/EVPN/DCI |
 | `fw_test.sh` | test płaszczyzny danych z węzłów FW |
+| `tests/` | testy bram EVPN: DF (`check_df.sh`), duplikaty BUM (`dup_test.sh`), soak/flapy BFD (`soak.sh`) |
 | `docs/*.png`, `tools/gen_png.py` | schematy PNG do README (generator: matplotlib) |
 | `topology.drawio`, `tools/gen_drawio.py` | diagram edytowalny (fizyczny, logiczny, P2P per DC) |
 | `clab/` | topologia, init-configi, numery seryjne `CAFECAFECAFE{dc}1xx` |
