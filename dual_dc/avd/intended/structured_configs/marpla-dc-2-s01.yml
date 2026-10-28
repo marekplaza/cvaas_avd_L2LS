@@ -205,6 +205,12 @@ prefix_lists:
     action: permit 10.102.0.0/24 eq 32
   - sequence: 20
     action: permit 10.102.3.0/24 eq 32
+- name: PL-GW-PEER-LOOPBACKS
+  sequence_numbers:
+  - sequence: 10
+    action: permit 10.102.0.2/32
+  - sequence: 20
+    action: permit 10.102.3.2/32
 route_maps:
 - name: RM-BGP-10.100.0.0-IN
   sequence_numbers:
@@ -220,6 +226,13 @@ route_maps:
     - ip address prefix-list PL-DCI-OUT
   - sequence: 20
     type: deny
+  - sequence: 5
+    type: permit
+    description: other local gateway loopbacks - backup path only
+    match:
+    - ip address prefix-list PL-GW-PEER-LOOPBACKS
+    set:
+    - as-path prepend 65200
 - name: RM-BGP-10.100.0.6-IN
   sequence_numbers:
   - sequence: 10
@@ -234,6 +247,13 @@ route_maps:
     - ip address prefix-list PL-DCI-OUT
   - sequence: 20
     type: deny
+  - sequence: 5
+    type: permit
+    description: other local gateway loopbacks - backup path only
+    match:
+    - ip address prefix-list PL-GW-PEER-LOOPBACKS
+    set:
+    - as-path prepend 65200
 - name: RM-CONN-2-BGP
   sequence_numbers:
   - sequence: 10
@@ -247,6 +267,13 @@ route_maps:
     description: remote DC gateway loopbacks stay on the gateways
     match:
     - ip address prefix-list PL-DCI-IN
+  - sequence: 15
+    type: permit
+    description: other local gateway loopbacks - backup path only
+    match:
+    - ip address prefix-list PL-GW-PEER-LOOPBACKS
+    set:
+    - as-path prepend 65200
   - sequence: 20
     type: permit
 router_bfd:

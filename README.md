@@ -217,9 +217,48 @@ i `default-route-target only` (każda brama importuje wszystkie strefy, więc pr
 | RTC przywrócone | 62 | 54 | 4 | 0 | 0 |
 
 Straty w przebiegu 1 pokrywają się z flapem BFD (`CtrlTimeout`, kontener nie odpowiadał ~3 s) i nie powtórzyły
-się – to host. Serie **+2/+3 pojawiają się natomiast tylko z RTC** (12/240 wobec 0/240 bez RTC); po
-pierwszym pakiecie unknown unicast, w ruchu bez czyszczenia MAC brak duplikatów. Źródło do ustalenia
-(tcpdump na DCI). Wyniki: `dual_dc/tests/results/rtc-before/`, `rtc-after/` (poza repo).
+się – to host. Wyniki: `dual_dc/tests/results/rtc-before/`, `rtc-after/` (poza repo).
+
+### Skąd duplikaty po wyczyszczeniu MAC (tcpdump)
+
+Przechwyt VXLAN na wszystkich bramach podczas `dup_test`, seria +2 na VLAN 399 (DF w obu DC = brama `.2`):
+
+- **request** FW1 → FW2 dociera do FW2 **raz** – leaf zalewa do obu bram, ale bramy nie-DF go odrzucają;
+- **odpowiedź** FW2 → FW1 dociera **trzy razy**: leaf DC2 nie zna MAC-a FW1 (tablice wyczyszczone) i zalewa
+  do obu bram DC2; `dc2-s02` (DF) rozsyła do obu bram DC1, a `dc2-s01` (nie-DF), który zdążył już poznać MAC
+  FW1 z trasy type-2, wysyła swoją kopię jako **znany unicast** – DF filtruje tylko BUM. W DC1 to samo:
+  `s01` zna MAC i przekazuje kopię do leafa, `s02` (DF) przekazuje dwie.
+
+To wyścig zalewu unknown unicast z nauką MAC przez EVPN na kolejnych bramach – występuje tylko przy pierwszym
+pakiecie po wyczyszczeniu tablic MAC na wszystkich 16 switchach naraz, gdy hosty dalej mają ARP. W ruchu bez
+czyszczenia MAC duplikatów nie ma. Ile bram zdąży poznać MAC, zależy od czasu propagacji type-2 – stąd
+rzadkie +2/+3, częstsze przy przestojach hosta.
+
+### Łącze bram tylko jako zapas – AS-path prepend
+
+Przechwyt pokazał też, że **~25% pakietów VXLAN (642/2510) szło przez łącze bram `Et9`**. `s02` zna
+loopbacki `s01` po iBGP z tą samą długością AS-path co `s01` bezpośrednio, więc leaf rozkładał ruch do VTEP-a
+`s01` na dwie ścieżki (wprost i przez `s02` + `Et9`). To samo przez DCI: `dc2-s01` miał do VTEP-a `dc1-s02`
+ścieżkę bezpośrednią i przez `dc1-s01`.
+
+Poprawka: prefix-lista `PL-GW-PEER-LOOPBACKS` (loopbacki drugiej bramy) i `set as-path prepend <AS>` w
+`RM-UNDERLAY-TO-LEAFS` (seq 15) oraz w generowanych przez AVD route-mapach DCI `RM-BGP-<peer>-OUT` (seq 5,
+dołączane przez `structured_config`). Ścieżka bezpośrednia jest główna, ta przez drugą bramę – zapasowa.
+
+| | przed | po prependzie leafów | po prependzie DCI |
+|---|---|---|---|
+| leaf → VTEP `s01` | 2 ścieżki (wprost, przez `s02`) | **1** (AS-path `65100`; `65100 65100` zapas) | 1 |
+| `dc2-s01` → VTEP `dc1-s02` | 2 ścieżki | 2 | **1** (Et8) |
+| pakiety VXLAN na `Et9` podczas `dup_test` | 642 / 2510 | 160 / 2011 | **0 / 1848** |
+| `dup_test` 10 rund | – | +1 max | +1 max, 0 strat |
+
+### Po przeniesieniu VM (vMotion) na inny serwer
+
+Przed: kilkusekundowe przestoje kontenerów (flapy BFD `CtrlTimeout` na pojedynczych bramach). Po: pomiar
+opóźnienia planowania (sleep 10 ms, 60 tys. próbek przez 10 min) – **max 34 ms**, nic powyżej 200 ms, CPU
+84% wolne; `make soak MIN=10` – 0 flapów BFD, 0 strat, tylko +1. VM ma 72 vCPU (72 sockety × 1 rdzeń) na
+E5-2699 v3 – jeśli to tyle, ile wątków ma serwer, VM zatrzymuje się przy każdym obciążeniu hypervisora
+(CPU ready / co-stop): warto sprawdzić w vCenter i rozważyć mniej vCPU.
 
 ## Wyniki testów (gałąź `single-domain-with-rtc`, 2026-10-06)
 

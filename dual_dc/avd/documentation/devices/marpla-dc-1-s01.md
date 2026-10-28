@@ -876,6 +876,13 @@ router bfd
 | 10 | permit 10.101.0.0/24 eq 32 |
 | 20 | permit 10.101.3.0/24 eq 32 |
 
+##### PL-GW-PEER-LOOPBACKS
+
+| Sequence | Action |
+| -------- | ------ |
+| 10 | permit 10.101.0.2/32 |
+| 20 | permit 10.101.3.2/32 |
+
 ##### PL-LOOPBACKS-EVPN-OVERLAY
 
 | Sequence | Action |
@@ -894,6 +901,10 @@ ip prefix-list PL-DCI-IN
 ip prefix-list PL-DCI-OUT
    seq 10 permit 10.101.0.0/24 eq 32
    seq 20 permit 10.101.3.0/24 eq 32
+!
+ip prefix-list PL-GW-PEER-LOOPBACKS
+   seq 10 permit 10.101.0.2/32
+   seq 20 permit 10.101.3.2/32
 !
 ip prefix-list PL-LOOPBACKS-EVPN-OVERLAY
    seq 10 permit 10.101.0.0/24 eq 32
@@ -914,6 +925,7 @@ ip prefix-list PL-LOOPBACKS-EVPN-OVERLAY
 
 | Sequence | Type | Match | Set | Sub-Route-Map | Continue |
 | -------- | ---- | ----- | --- | ------------- | -------- |
+| 5 | permit | ip address prefix-list PL-GW-PEER-LOOPBACKS | as-path prepend 65100 | - | - |
 | 10 | permit | ip address prefix-list PL-DCI-OUT | - | - | - |
 | 20 | deny | - | - | - | - |
 
@@ -927,6 +939,7 @@ ip prefix-list PL-LOOPBACKS-EVPN-OVERLAY
 
 | Sequence | Type | Match | Set | Sub-Route-Map | Continue |
 | -------- | ---- | ----- | --- | ------------- | -------- |
+| 5 | permit | ip address prefix-list PL-GW-PEER-LOOPBACKS | as-path prepend 65100 | - | - |
 | 10 | permit | ip address prefix-list PL-DCI-OUT | - | - | - |
 | 20 | deny | - | - | - | - |
 
@@ -941,6 +954,7 @@ ip prefix-list PL-LOOPBACKS-EVPN-OVERLAY
 | Sequence | Type | Match | Set | Sub-Route-Map | Continue |
 | -------- | ---- | ----- | --- | ------------- | -------- |
 | 10 | deny | ip address prefix-list PL-DCI-IN | - | - | - |
+| 15 | permit | ip address prefix-list PL-GW-PEER-LOOPBACKS | as-path prepend 65100 | - | - |
 | 20 | permit | - | - | - | - |
 
 #### Route-maps Device Configuration
@@ -950,6 +964,11 @@ ip prefix-list PL-LOOPBACKS-EVPN-OVERLAY
 route-map RM-BGP-10.100.0.1-IN permit 10
    match ip address prefix-list PL-DCI-IN
 !
+route-map RM-BGP-10.100.0.1-OUT permit 5
+   description other local gateway loopbacks - backup path only
+   match ip address prefix-list PL-GW-PEER-LOOPBACKS
+   set as-path prepend 65100
+!
 route-map RM-BGP-10.100.0.1-OUT permit 10
    match ip address prefix-list PL-DCI-OUT
 !
@@ -957,6 +976,11 @@ route-map RM-BGP-10.100.0.1-OUT deny 20
 !
 route-map RM-BGP-10.100.0.3-IN permit 10
    match ip address prefix-list PL-DCI-IN
+!
+route-map RM-BGP-10.100.0.3-OUT permit 5
+   description other local gateway loopbacks - backup path only
+   match ip address prefix-list PL-GW-PEER-LOOPBACKS
+   set as-path prepend 65100
 !
 route-map RM-BGP-10.100.0.3-OUT permit 10
    match ip address prefix-list PL-DCI-OUT
@@ -969,6 +993,11 @@ route-map RM-CONN-2-BGP permit 10
 route-map RM-UNDERLAY-TO-LEAFS deny 10
    description remote DC gateway loopbacks stay on the gateways
    match ip address prefix-list PL-DCI-IN
+!
+route-map RM-UNDERLAY-TO-LEAFS permit 15
+   description other local gateway loopbacks - backup path only
+   match ip address prefix-list PL-GW-PEER-LOOPBACKS
+   set as-path prepend 65100
 !
 route-map RM-UNDERLAY-TO-LEAFS permit 20
 ```
