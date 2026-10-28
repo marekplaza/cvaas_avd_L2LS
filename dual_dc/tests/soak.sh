@@ -16,10 +16,19 @@ MIN=${1:-10}
 TARGET=${2:-10.3.10.12}
 SWITCHES=$(docker ps --format '{{.Names}}' | grep -E 'marpla-dc-[12]-(s0|wew|priv|ext)' | sort)
 
-bfd_downs() { docker exec "$1" Cli -p 15 -c "show logging" 2>/dev/null | grep -c 'BFD-5-STATE_CHANGE.*Up to Down'; }
+# BFD Up->Down log entries since epoch $2. Counted by timestamp, not by line count: the
+# MAC clears are logged too and roll the small log buffer over during the soak.
+bfd_downs() { # bfd_downs <device> <since-epoch>
+    docker exec "$1" Cli -p 15 -c "show logging" 2>/dev/null | gawk -v since="$2" -v y="$(date -u +%Y)" '
+        BEGIN { split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m); for (i in m) mon[m[i]] = i }
+        /BFD-5-STATE_CHANGE.*Up to Down/ {
+            split($3, t, ":")
+            if (mktime(y " " mon[$1] " " $2 " " t[1] " " t[2] " " t[3], 1) >= since) n++
+        }
+        END { print n + 0 }'
+}
 
-declare -A before
-for s in $SWITCHES; do before[$s]=$(bfd_downs "$s"); done
+START=$(date -u +%s)
 
 echo "== soak $MIN min, FW1 -> $TARGET, start $(date -u +%H:%M:%SZ)"
 log=$(mktemp)
@@ -35,8 +44,7 @@ echo
 echo "== BFD Up->Down since start"
 flaps=0
 for s in $SWITCHES; do
-    n=$(($(bfd_downs "$s") - ${before[$s]}))
-    [ "$n" -lt 0 ] && n="?"   # log buffer wrapped
+    n=$(bfd_downs "$s" "$START")
     printf '  %-22s %s\n' "$s" "$n"
     [ "$n" != 0 ] && flaps=$((flaps + 1))
 done
