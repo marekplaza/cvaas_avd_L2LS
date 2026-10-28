@@ -734,6 +734,9 @@ router bgp 65103
       neighbor IPv4-UNDERLAY-PEERS activate
       neighbor MLAG-IPv4-UNDERLAY-PEER activate
    !
+   address-family rt-membership
+      neighbor EVPN-OVERLAY-PEERS activate
+   !
    vrf EXT
       rd 10.101.1.5:10
       route-target import evpn 10:10

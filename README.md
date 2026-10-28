@@ -1,18 +1,20 @@
-# Dual DC + DCI – EVPN multi-domain gateway (single domain, bez RTC)
+# Dual DC + DCI – EVPN multi-domain gateway z RT Constraint i iBGP między bramami
 
-> **Gałąź `single-domain`** – dwa ośrodki ze wspólnymi bramami EVPN dla wszystkich stref
-> bezpieczeństwa. Strefy są rozdzielone osobnymi VRF-ami i route-targetami; **RT Constraint nie jest
-> włączony** – to punkt odniesienia dla gałęzi `single-domain-with-rtc`.
+> **Gałąź `single-domain-rtc-gw-ibgp`** – dwa ośrodki ze wspólnymi bramami EVPN dla wszystkich stref
+> bezpieczeństwa, **BGP Route Target Constraint (RFC 4684)** (leaf dostaje w płaszczyźnie sterowania
+> wyłącznie trasy EVPN swojej strefy) **oraz łącze i iBGP między bramami jednego DC** (zgodny wybór DF,
+> brak duplikatów BUM przez DCI). Połączenie gałęzi `single-domain-with-rtc` i `single-domain-gw-ibgp`.
 
 | Gałąź | Zawartość |
 |---|---|
 | `main` | lab jednego DC (L2LS, EVPN MLAG) + CVaaS |
-| `dualDCandDCI` | gałąź rozwojowa dual DC – ta sama konfiguracja co tutaj + pełna dokumentacja draw.io (strona RD/RT) |
-| **`single-domain`** | **ta gałąź**: dual DC, wspólne bramy, bez RTC |
-| `single-domain-with-rtc` | jak ta gałąź + RT Constraint (leaf dostaje tylko trasy EVPN swojej strefy) |
-| **`single-domain-gw-ibgp`** | **jak `single-domain` + łącze i iBGP między bramami jednego DC – naprawa wyboru DF (niżej)** |
+| `dualDCandDCI` | gałąź rozwojowa dual DC – stan bez RTC z pełną dokumentacją (draw.io) |
+| `single-domain` | dual DC, wspólne bramy, **bez RTC** – strefy rozdzielone tylko VRF/RT |
+| `single-domain-with-rtc` | jak `single-domain` + RT Constraint |
+| `single-domain-gw-ibgp` | jak `single-domain` + łącze i iBGP między bramami jednego DC (naprawa DF) |
+| **`single-domain-rtc-gw-ibgp`** | **ta gałąź**: RT Constraint + iBGP między bramami |
 
-## Gałąź `single-domain-gw-ibgp` – DF bram I-ESI
+## iBGP między bramami – DF bram I-ESI (z `single-domain-gw-ibgp`)
 
 **Problem (single-domain):** obie bramy jednego DC (s01, s02, AS 65100) nie mają sesji między sobą, a kopia
 ich tras przez leafy lub drugi DC jest odrzucana przez kontrolę pętli AS-path. Żadna brama nie widzi tras
@@ -60,25 +62,29 @@ Nowe łącza wymagają przebudowy laba (`make start`) – cEOS nie wykrywa inter
 Po przebudowie configlety leafów w CVaaS są bez zmian, więc ich build kończy się `SKIPPED`; trzeba wymusić
 change control (np. tymczasowa linia w configach leafów, deploy, `make build`, deploy).
 
-## Jak są rozdzielone strefy
 
-Każda strefa (`wew`, `priv`, `ext`) to osobny tenant/VRF z własnymi route-targetami (VRF 10:10 / 20:20 / 30:30,
-VLAN-y `<VLAN>:<VLAN>`), bez przecieków między VRF-ami. Tablice routingu leafów zawierają więc tylko
-prefiksy własnej strefy (lokalne i z tej samej strefy w drugim DC), a ruch między strefami może przejść
-wyłącznie przez firewall.
+## RT Constraint (z `single-domain-with-rtc`)
 
-**Płaszczyzna sterowania nie jest jednak rozdzielona.** Route servery EVPN (spine'y) wysyłają każdemu
-leafowi trasy wszystkich stref; leaf odrzuca obce dopiero przy imporcie do VRF, ale trzyma je w tablicy BGP:
+W `single-domain` strefy są rozdzielone tylko w tablicach routingu (osobne VRF-y i route-targety),
+ale route servery EVPN (spine'y) wysyłają każdemu leafowi trasy **wszystkich** stref – leaf odrzuca je
+dopiero przy imporcie. Tu każdy leaf ogłasza po `address-family rt-membership`, które RT importuje,
+a route server wysyła mu tylko pasujące trasy:
 
-| Urządzenie | ścieżki EVPN z RT w tablicy BGP | w tym wyłącznie z RT innych stref |
+```yaml
+# dual_dc/avd/group_vars/MARPLA_DCS.yml
+evpn_overlay_bgp_rtc: true
+```
+
+| | bez RTC (`single-domain`) | z RTC (ta gałąź) |
 |---|---|---|
-| `marpla-dc-1-priv-l03` | 144 | 104 |
-| `marpla-dc-2-ext-l05` | 150 | 116 |
+| ścieżki EVPN w tablicy BGP `marpla-dc-1-priv-l03` | 144, z czego 104 wyłącznie z RT stref ext/wew | **40**, każda z RT strefy priv |
+| ścieżki EVPN `marpla-dc-2-ext-l05` | 150, z czego 116 obcych | **34** |
+| bramy (spine'y) | wszystkie strefy | wszystkie strefy – z założenia obsługują DCI dla każdej |
 
-To ograniczenie usuwa gałąź `single-domain-with-rtc` (RT Constraint: odpowiednio 40 i 34 ścieżki,
-wszystkie z RT własnej strefy). Bramy w obu wariantach znają wszystkie strefy, bo obsługują DCI dla każdej z nich.
+Bramy pozostają jedynym miejscem, gdzie spotykają się wszystkie strefy (nadal rozdzielone VRF-ami);
+pełne rozdzielenie także tam wymagałoby osobnych bram/DCI per strefa.
 
-![Płaszczyzna sterowania bez RTC](dual_dc/docs/control-plane.png)
+![Płaszczyzna sterowania z RTC](dual_dc/docs/control-plane.png)
 
 ### Które RT należą do której strefy
 
@@ -97,40 +103,49 @@ Leaf strefy `priv` importuje więc tylko `30:30`, `310:310`, `321:321` (DC1) / `
 ### Naoczny przykład: leaf strefy `priv` – `marpla-dc-1-priv-l03`
 
 Pytamy leaf strefy **priv** o trasy MAC/IP z RT **`210:210`**, czyli VLAN-u 210 strefy **wew**.
-Na tej gałęzi (bez RTC) leaf priv ma je w tablicy BGP – 12 ścieżek obcej strefy:
+
+**Bez RTC** (gałąź `single-domain`) – leaf priv ma w tablicy BGP trasy obcej strefy (12 ścieżek), m.in.:
 
 ```
 marpla-dc-1-priv-l03# show bgp evpn extcommunity rt 210:210 route-type mac-ip
           Network                Next Hop              Metric  LocPref Weight  Path
- * >Ec    RD: 10.101.1.1:210 mac-ip 001c.7331.18f2
-                                 10.101.2.1            -       100     0       65100 65101 i
  * >Ec    RD: 10.101.1.1:210 mac-ip 001c.7331.18f2 10.2.10.11
-                                 10.101.2.1            -       100     0       65100 65101 i
- * >Ec    RD: 10.101.1.2:210 mac-ip 001c.7331.18f2 10.2.10.11
                                  10.101.2.1            -       100     0       65100 65101 i
  * >      RD: 10.101.0.1:210 mac-ip 001c.73fa.4797 10.2.10.12
                                  10.101.3.1            -       100     0       65100 65200 65201 i
- * >      RD: 10.101.0.2:210 mac-ip 001c.73fa.4797 10.2.10.12
-                                 10.101.3.2            -       100     0       65100 65200 65201 i
  (...)
 ```
 
-- `RD 10.101.1.1:210` / `10.101.1.2:210`, AS path `65100 65101` – FW DC1 (`10.2.10.11`) nauczony na parze **wew**
-  w DC1 (leafy `wew-l01`/`wew-l02`, VTEP 10.101.2.1), przekazany leafowi priv przez route server DC1.
-- `RD 10.101.0.1:210` / `10.101.0.2:210`, AS path `65100 65200 65201` – FW DC2 (`10.2.10.12`) ze strefy **wew** DC2,
-  ponownie ogłoszony przez bramy DC1.
+- `RD 10.101.1.1:210`, AS path `65100 65101` – FW DC1 (`10.2.10.11`) nauczony na parze **wew** w DC1 (leaf `wew-l01`, Lo0 10.101.1.1), przekazany przez route server DC1.
+- `RD 10.101.0.1:210`, AS path `65100 65200 65201` – FW DC2 (`10.2.10.12`) ze strefy **wew** DC2, ponownie ogłoszony przez bramę `dc1-s01`.
 
-Żadna z tych tras nie trafia do tablic routingu – leaf priv nie ma VLAN-u 210 ani VRF-u WEW, więc nie importuje
-RT `210:210` ani `20:20`. Są jednak w jego **płaszczyźnie sterowania** – tak samo trasy strefy ext (`110:110`, `10:10` …).
-
-Na gałęzi `single-domain-with-rtc` (RT Constraint) to samo zapytanie zwraca **pustą tablicę**, a cała tablica EVPN
-leafa priv zawiera tylko RD/RT strefy priv (`:310`, `:321`, `:399`, `:30`) i trasy Ethernet Segment bram:
+**Z RTC** (ta gałąź) – to samo zapytanie zwraca pustą tablicę, trasy strefy wew w ogóle nie docierają do leafa priv:
 
 ```
 marpla-dc-1-priv-l03# show bgp evpn extcommunity rt 210:210 route-type mac-ip
           Network                Next Hop              Metric  LocPref Weight  Path
 marpla-dc-1-priv-l03#
 ```
+
+Cała tablica EVPN leafa (`show bgp evpn`) zawiera teraz wyłącznie trasy strefy priv – RD kończą się na
+`:310`, `:321`, `:399` (VLAN-y priv) i `:30` (VRF PRIV) – plus trasy Ethernet Segment bram:
+
+```
+marpla-dc-1-priv-l03# show bgp evpn domain local
+ * >      RD: 10.101.3.1:1 auto-discovery 0000:0000:0001:0001:0001          <- ES bram DC1 (all-active)
+ * >      RD: 10.101.1.3:310 mac-ip 001c.7331.18f2 10.3.10.11                <- FW DC1, VLAN 310 (lokalnie)
+ * >      RD: 10.101.0.1:310 mac-ip 001c.73fa.4797 10.3.10.12                <- FW DC2 przez bramę dc1-s01
+ * >      RD: 10.101.0.1:399 mac-ip 001c.73fa.4797                           <- FW DC2, VLAN HA 399
+ * >      RD: 10.101.0.1:310 imet 10.101.3.1                                 <- flood list VLAN 310: brama
+ * >Ec    RD: 10.102.1.3:30 ip-prefix 10.3.22.0/24                           <- VLAN lokalny DC2 priv (type-5)
+ (...)
+marpla-dc-1-priv-l03# show bgp evpn domain remote
+          Network                Next Hop              Metric  LocPref Weight  Path
+marpla-dc-1-priv-l03#
+```
+
+Leaf nie ma też żadnych tras „domain remote” – trasy z DC2 dostaje już jako lokalne, z next-hopem bram DC1
+(`10.101.3.1` / `10.101.3.2`). Pełne zrzuty: [dual_dc/ku pamieci zrzuty z tablic evpn](<dual_dc/ku pamieci zrzuty z tablic evpn>).
 
 
 ## Topologia
@@ -158,11 +173,11 @@ geo-rozciągniętego klastra firewall A/P.
 | VRF / L3VNI / RT | EXT 1009000 / 10:10 · WEW 2009000 / 20:20 · PRIV 3009000 / 30:30 |
 | RD / RT VLAN | RD `<Lo0>:<VLAN>`, RT `<VLAN>:<VLAN>`; VRF: RD `<Lo0>:<vrf_id>` |
 | Anycast GW | ten sam IP i MAC `00:1c:73:00:dc:99` w obu DC |
-| RTC | wyłączony (`evpn_overlay_bgp_rtc` nieustawione) |
+| RTC | `address-family rt-membership` na sesjach EVPN; route servery `default-route-target only` |
 | Tagi CloudVision | `owner:marpla`, `dmz:<strefa>`; hierarchia `marpla-DCx` → `marpla-DCx-POD1` → rack = para leafów |
 
 Pełny opis (VLAN-y, adresacja, okablowanie, pliki): [dual_dc/README.md](dual_dc/README.md);
-diagram edytowalny (fizyczny, logiczny, P2P per DC): [dual_dc/topology.drawio](dual_dc/topology.drawio).
+diagram edytowalny ze stronami P2P i RD/RT: [dual_dc/topology.drawio](dual_dc/topology.drawio).
 
 ## Uruchomienie
 
@@ -171,34 +186,62 @@ cd dual_dc
 make start        # containerlab: 18 × cEOS 4.35.6M, sieć mgmt 10.30.0.0/16
 make build        # AVD (DC1 i DC2 jako osobne fabrici) + katalog testów DCI
 make deploy_cvp   # przez CVaaS, change control zatwierdzany i uruchamiany automatycznie – albo: make deploy (eAPI)
-make test         # fw_test + ANTA: katalogi AVD i testy BGP/EVPN/DCI
-make test_dci     # fw_test + tylko testy BGP/EVPN/DCI
+make test         # fw_test + ANTA: katalogi AVD i testy BGP/EVPN/DCI/RTC
+make test_dci     # fw_test + tylko testy BGP/EVPN/DCI/RTC
 make stop         # po decommission urządzeń w CVaaS
 ```
 
 Obraz cEOS: `./get_ceos.sh -v 4.35.6M` (wymaga `ARISTA_TOKEN`). Raporty ANTA: `dual_dc/avd/anta/reports/`.
 
-## Wyniki testów
+## Wyniki tej gałęzi (2026-10-28)
 
-Uruchomione 2026-10-06 na labie z wdrożoną konfiguracją tej gałęzi (`make deploy_cvp`, potem `make test`).
+Lab z wdrożoną (CVaaS) konfiguracją tej gałęzi. Lokalna sesja między bramami jest w peer groupie
+`EVPN-LOCAL-GW` – AVD 6.4 obsługuje `address_family_rtc` tylko per peer group – z `rt-membership`
+i `default-route-target only` (każda brama importuje wszystkie strefy, więc prosi drugą o wszystko).
+
+| Sprawdzenie | Wynik |
+|---|---|
+| trasy EVPN na `marpla-dc-1-wew-l01` | bez RTC 78 unikalnych, z czego 52 obcych stref → **17, wszystkie WEW** |
+| ścieżki EVPN `wew-l01` / `priv-l03` / `ext-l05` (`dc2`) | 232 / 226 / 248 → **64 / 74 / 64** |
+| sesje `rt-membership` na bramie | 9/9 (6 leafów, 2 bramy drugiego DC, lokalna brama) |
+| `make check_df` | DF zgodny na obu bramach, 8/8 VLAN-ów w obu DC |
+| `make test_dci` | `fw_test` 20/20, ANTA **116/116** (w tym `VerifyEVPNRoutesMatchImportedRT` 12/12) |
+
+`make dup_test ROUNDS=30` (120 serii, czyszczenie tablic MAC przed każdą serią), A/B/A w tych samych warunkach:
+
+| Przebieg | +0 | +1 | +2/+3 | strata | flapy BFD |
+|---|---|---|---|---|---|
+| bez RTC (`single-domain-gw-ibgp`, 05:19) | 68 | 52 | 0 | 0 | 0 |
+| z RTC – przebieg 1 | 52 | 60 | 8 | 5 | 3 (przestój kontenera `dc2-s01`) |
+| RTC zdjęte z CLI | 56 | 64 | 0 | 0 | 0 |
+| RTC przywrócone | 62 | 54 | 4 | 0 | 0 |
+
+Straty w przebiegu 1 pokrywają się z flapem BFD (`CtrlTimeout`, kontener nie odpowiadał ~3 s) i nie powtórzyły
+się – to host. Serie **+2/+3 pojawiają się natomiast tylko z RTC** (12/240 wobec 0/240 bez RTC); po
+pierwszym pakiecie unknown unicast, w ruchu bez czyszczenia MAC brak duplikatów. Źródło do ustalenia
+(tcpdump na DCI). Wyniki: `dual_dc/tests/results/rtc-before/`, `rtc-after/` (poza repo).
+
+## Wyniki testów (gałąź `single-domain-with-rtc`, 2026-10-06)
+
+Uruchomione 2026-10-06 na labie z wdrożoną konfiguracją tej gałęzi (`make test`).
 
 **`fw_test`** – 20/20 celów osiągalnych: z obu węzłów FW anycast GW w każdej strefie (VLAN rozciągnięty
 i lokalny), drugi węzeł FW przez DCI w każdej strefie oraz VLAN HA 399.
 
-**Testy BGP/EVPN/DCI** (`dual_dc/avd/anta_catalogs/dci_tests.yml`) – **104/104**:
+**Testy BGP/EVPN/DCI/RTC** (`dual_dc/avd/anta_catalogs/dci_tests.yml`) – **116/116**:
 
 | Test | Wynik | Co potwierdza |
 |---|---|---|
-| `VerifyBGPPeerSession`, `VerifyBGPPeerCount` | 32/32 | wszystkie sesje BGP, liczba peerów EVPN i IPv4 |
+| `VerifyBGPPeerSession`, `VerifyBGPPeerCount` | 32/32 | wszystkie sesje BGP; liczba peerów EVPN, IPv4 i **rt-membership** (2 na leafie, 8 na bramie) |
+| `VerifyEVPNRoutesMatchImportedRT` (własny test) | 12/12 | tablica BGP EVPN leafa zawiera tylko trasy z RT jego strefy |
 | `VerifyVxlanVtep` | 16/16 | leafy tunelują tylko do bram własnego DC |
 | `VerifyVxlanVniBinding` | 16/16 | przez DCI idą tylko wybrane VNI |
 | `VerifyEVPNType5Routes`, `VerifyEVPNType2Route` | 32/32 | trasy przechodzą przez bramy między DC |
 | `VerifyBgpRouteMaps`, `VerifyBGPExchangedRoutes` | 8/8 | DCI wymienia tylko loopbacki bram, filtr do leafów działa |
 
-Testów RTC tu nie ma – po uruchomieniu katalogu z gałęzi `single-domain-with-rtc` na tej konfiguracji
-28 testów RTC jest czerwonych (brak sesji rt-membership, trasy innych stref w tablicach leafów).
+Bez RTC (kontrola negatywna) 28 testów RTC było czerwonych – testy faktycznie wykrywają brak filtrowania.
 
-**Pełny `make test`** (katalogi AVD + DCI) – 500 testów: **456 OK, 44 znane odstępstwa**, wszystkie
+**Pełny `make test`** (katalogi AVD + DCI) – 512 testów: **468 OK, 44 znane odstępstwa**, wszystkie
 wynikające ze środowiska cEOS lub z projektu, nie z błędu konfiguracji:
 
 | Test | Liczba | Przyczyna |

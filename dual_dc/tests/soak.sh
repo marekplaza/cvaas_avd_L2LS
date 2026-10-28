@@ -50,7 +50,7 @@ for s in $SWITCHES; do
 done
 
 echo "== ping series: $(wc -l <"$log")"
-awk '{print $6, $7}' "$log" | sed 's/,$//' | sort | uniq -c | sed 's/^/  /'
+sed -E 's/^[0-9:]+ [0-9]+ packets transmitted, //; s/, time .*//' "$log" | sort | uniq -c | sed 's/^/  /'
 lossy=$(grep -vc ' 0% packet loss' "$log")
 
 echo "== max BFD Rx interval (since last reset)"

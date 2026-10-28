@@ -555,6 +555,15 @@ ASN Notation: asplain
 
 #### Router BGP Peer Groups
 
+##### EVPN-LOCAL-GW
+
+| Settings | Value |
+| -------- | ----- |
+| Remote AS | 65100 |
+| Source | Loopback0 |
+| Send community | all |
+| Maximum routes | 0 (no limit) |
+
 ##### EVPN-OVERLAY-CORE
 
 | Settings | Value |
@@ -592,7 +601,7 @@ ASN Notation: asplain
 | -------- | --------- | --- | -------- | -------------- | -------------- | ----------------------- | ------------------------- | ---------- | --- | --------------------- | ---------------------- | ------- | ------------ |
 | 10.100.0.5 | 65200 | default | - | - | - | - | - | - | - | - | - | - | - |
 | 10.100.0.7 | 65200 | default | - | - | - | - | - | - | - | - | - | - | - |
-| 10.101.0.1 | 65100 | default | - | all | 0 (no limit) | - | - | - | - | - | - | - | - |
+| 10.101.0.1 | Inherited from peer group EVPN-LOCAL-GW | default | - | Inherited from peer group EVPN-LOCAL-GW | Inherited from peer group EVPN-LOCAL-GW | - | - | - | - | - | - | - | - |
 | 10.101.1.1 | 65101 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
 | 10.101.1.2 | 65101 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
 | 10.101.1.3 | 65102 | default | - | Inherited from peer group EVPN-OVERLAY-PEERS | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | Inherited from peer group EVPN-OVERLAY-PEERS | - | - | - | - |
@@ -615,14 +624,9 @@ ASN Notation: asplain
 
 | Peer Group | Activate | Route-map In | Route-map Out | Peer-tag In | Peer-tag Out | Encapsulation | Next-hop-self Source Interface |
 | ---------- | -------- | ------------ | ------------- | ----------- | ------------ | ------------- | ------------------------------ |
+| EVPN-LOCAL-GW | True | - | - | - | - | default | - |
 | EVPN-OVERLAY-CORE | True | - | - | - | - | default | - |
 | EVPN-OVERLAY-PEERS | True | - | - | - | - | default | - |
-
-##### EVPN Neighbors
-
-| Neighbor | Activate | Route-map In | Route-map Out | Peer-tag In | Peer-tag Out | Encapsulation | Next-hop-self Source Interface |
-| -------- | -------- | ------------ | ------------- | ----------- | ------------ | ------------- | ------------------------------ |
-| 10.101.0.1 | True | - | - | - | - | default | - |
 
 ##### EVPN DCI Gateway Summary
 
@@ -662,6 +666,11 @@ router bgp 65100
    no bgp default ipv4-unicast
    maximum-paths 4
    bgp bestpath d-path
+   neighbor EVPN-LOCAL-GW peer group
+   neighbor EVPN-LOCAL-GW remote-as 65100
+   neighbor EVPN-LOCAL-GW update-source Loopback0
+   neighbor EVPN-LOCAL-GW send-community
+   neighbor EVPN-LOCAL-GW maximum-routes 0
    neighbor EVPN-OVERLAY-CORE peer group
    neighbor EVPN-OVERLAY-CORE update-source Loopback0
    neighbor EVPN-OVERLAY-CORE bfd
@@ -687,11 +696,8 @@ router bgp 65100
    neighbor 10.100.0.7 description DCI_marpla-dc-2-s01_Ethernet8
    neighbor 10.100.0.7 route-map RM-BGP-10.100.0.7-IN in
    neighbor 10.100.0.7 route-map RM-BGP-10.100.0.7-OUT out
-   neighbor 10.101.0.1 remote-as 65100
-   neighbor 10.101.0.1 update-source Loopback0
+   neighbor 10.101.0.1 peer group EVPN-LOCAL-GW
    neighbor 10.101.0.1 description marpla-dc-1-s01_EVPN_LOCAL_GW
-   neighbor 10.101.0.1 send-community
-   neighbor 10.101.0.1 maximum-routes 0
    neighbor 10.101.1.1 peer group EVPN-OVERLAY-PEERS
    neighbor 10.101.1.1 remote-as 65101
    neighbor 10.101.1.1 description marpla-dc-1-wew-l01_Loopback0
@@ -768,10 +774,10 @@ router bgp 65100
       redistribute learned
    !
    address-family evpn
+      neighbor EVPN-LOCAL-GW activate
       neighbor EVPN-OVERLAY-CORE activate
       neighbor EVPN-OVERLAY-CORE domain remote
       neighbor EVPN-OVERLAY-PEERS activate
-      neighbor 10.101.0.1 activate
       domain identifier 65100:1
       domain identifier 65200:2 remote
       neighbor default next-hop-self received-evpn-routes route-type ip-prefix inter-domain
@@ -786,6 +792,14 @@ router bgp 65100
       neighbor IPv4-UNDERLAY-PEERS activate
       neighbor 10.100.0.5 activate
       neighbor 10.100.0.7 activate
+   !
+   address-family rt-membership
+      neighbor EVPN-LOCAL-GW activate
+      neighbor EVPN-LOCAL-GW default-route-target only
+      neighbor EVPN-OVERLAY-CORE activate
+      neighbor EVPN-OVERLAY-CORE default-route-target only
+      neighbor EVPN-OVERLAY-PEERS activate
+      neighbor EVPN-OVERLAY-PEERS default-route-target only
    !
    vrf EXT
       rd 10.101.0.2:10

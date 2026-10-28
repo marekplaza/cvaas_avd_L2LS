@@ -288,6 +288,11 @@ router_bgp:
     ebgp_multihop: 15
     send_community: all
     maximum_routes: 0
+  - name: EVPN-LOCAL-GW
+    remote_as: '65100'
+    update_source: Loopback0
+    send_community: all
+    maximum_routes: 0
   neighbors:
   - ip_address: 10.100.0.1
     remote_as: '65200'
@@ -390,11 +395,8 @@ router_bgp:
       peer: marpla-dc-1-s02
     description: marpla-dc-1-s02
   - ip_address: 10.101.0.2
-    remote_as: '65100'
+    peer_group: EVPN-LOCAL-GW
     description: marpla-dc-1-s02_EVPN_LOCAL_GW
-    update_source: Loopback0
-    send_community: all
-    maximum_routes: 0
   redistribute:
     connected:
       enabled: true
@@ -471,19 +473,32 @@ router_bgp:
       next_hop_self_received_evpn_routes:
         enable: true
         inter_domain: true
-    neighbors:
-    - ip_address: 10.101.0.2
-      activate: true
     peer_groups:
     - name: EVPN-OVERLAY-PEERS
       activate: true
     - name: EVPN-OVERLAY-CORE
       activate: true
       domain_remote: true
+    - name: EVPN-LOCAL-GW
+      activate: true
     evpn_ethernet_segment:
     - domain: all
       identifier: 0000:0000:0001:0001:0001
       route_target_import: 00:00:00:01:00:01
+  address_family_rtc:
+    peer_groups:
+    - name: EVPN-OVERLAY-PEERS
+      activate: true
+      default_route_target:
+        only: true
+    - name: EVPN-OVERLAY-CORE
+      activate: true
+      default_route_target:
+        only: true
+    - name: EVPN-LOCAL-GW
+      activate: true
+      default_route_target:
+        only: true
   address_family_ipv4:
     peer_groups:
     - name: IPv4-UNDERLAY-PEERS

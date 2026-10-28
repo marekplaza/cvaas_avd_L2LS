@@ -130,3 +130,6 @@ dual_dc/avd/anta/
 
 # detailed output of dual_dc/tests/check_df.sh <label>
 dual_dc/tests/results/
+
+# Python bytecode
+__pycache__/

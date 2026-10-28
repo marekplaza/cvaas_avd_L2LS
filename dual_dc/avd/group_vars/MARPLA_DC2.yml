@@ -66,17 +66,28 @@ spine:
       # Not covered by evpn_gateway (remote_peers are domain remote only).
       structured_config:
         router_bgp:
-          neighbors:
-            - ip_address: 10.102.0.2
+          peer_groups:
+            - name: EVPN-LOCAL-GW
               remote_as: "65200"
               update_source: Loopback0
               send_community: all
               maximum_routes: 0
+          neighbors:
+            - ip_address: 10.102.0.2
+              peer_group: EVPN-LOCAL-GW
               description: marpla-dc-2-s02_EVPN_LOCAL_GW
           address_family_evpn:
-            neighbors:
-              - ip_address: 10.102.0.2
+            peer_groups:
+              - name: EVPN-LOCAL-GW
                 activate: true
+          # RT Constraint (AVD supports it per peer group only): each gateway
+          # imports every zone, so it asks the other one for all routes.
+          address_family_rtc:
+            peer_groups:
+              - name: EVPN-LOCAL-GW
+                activate: true
+                default_route_target:
+                  only: true
       l3_interfaces:
         - name: Ethernet7
           description: DCI_marpla-dc-1-s01_Ethernet7
@@ -106,17 +117,28 @@ spine:
       # Not covered by evpn_gateway (remote_peers are domain remote only).
       structured_config:
         router_bgp:
-          neighbors:
-            - ip_address: 10.102.0.1
+          peer_groups:
+            - name: EVPN-LOCAL-GW
               remote_as: "65200"
               update_source: Loopback0
               send_community: all
               maximum_routes: 0
+          neighbors:
+            - ip_address: 10.102.0.1
+              peer_group: EVPN-LOCAL-GW
               description: marpla-dc-2-s01_EVPN_LOCAL_GW
           address_family_evpn:
-            neighbors:
-              - ip_address: 10.102.0.1
+            peer_groups:
+              - name: EVPN-LOCAL-GW
                 activate: true
+          # RT Constraint (AVD supports it per peer group only): each gateway
+          # imports every zone, so it asks the other one for all routes.
+          address_family_rtc:
+            peer_groups:
+              - name: EVPN-LOCAL-GW
+                activate: true
+                default_route_target:
+                  only: true
       l3_interfaces:
         - name: Ethernet7
           description: DCI_marpla-dc-1-s02_Ethernet7

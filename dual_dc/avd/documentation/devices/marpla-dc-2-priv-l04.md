@@ -746,6 +746,9 @@ router bgp 65202
       neighbor IPv4-UNDERLAY-PEERS activate
       neighbor MLAG-IPv4-UNDERLAY-PEER activate
    !
+   address-family rt-membership
+      neighbor EVPN-OVERLAY-PEERS activate
+   !
    vrf PRIV
       rd 10.102.1.4:30
       route-target import evpn 30:30
