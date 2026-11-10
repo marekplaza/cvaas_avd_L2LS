@@ -1,0 +1,247 @@
+{
+  "freeTextAnnotations": [],
+  "freeShapeAnnotations": [],
+  "trafficRateAnnotations": [],
+  "scriptButtonAnnotations": [],
+  "groupStyleAnnotations": [],
+  "networkNodeAnnotations": [],
+  "nodeAnnotations": [
+    {
+      "id": "marpla-dc-1-s01",
+      "position": {
+        "x": 480,
+        "y": 120
+      },
+      "icon": "spine",
+      "level": "1",
+      "geoCoordinates": {
+        "lat": 48.775846,
+        "lng": 9.182932
+      }
+    },
+    {
+      "id": "marpla-dc-1-s02",
+      "position": {
+        "x": 480,
+        "y": 340
+      },
+      "icon": "spine",
+      "level": "1",
+      "geoCoordinates": {
+        "lat": 50.110924,
+        "lng": 8.682127
+      }
+    },
+    {
+      "id": "marpla-dc-1-wew-l01",
+      "position": {
+        "x": 260,
+        "y": 0
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 48.856613,
+        "lng": 2.352222
+      }
+    },
+    {
+      "id": "marpla-dc-1-wew-l02",
+      "position": {
+        "x": 260,
+        "y": 80
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 51.507351,
+        "lng": -0.127758
+      }
+    },
+    {
+      "id": "marpla-dc-1-priv-l03",
+      "position": {
+        "x": 260,
+        "y": 220
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 48.775846,
+        "lng": 11.982932
+      }
+    },
+    {
+      "id": "marpla-dc-1-priv-l04",
+      "position": {
+        "x": 260,
+        "y": 300
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 50.110924,
+        "lng": 11.482127
+      }
+    },
+    {
+      "id": "marpla-dc-1-ext-l05",
+      "position": {
+        "x": 260,
+        "y": 440
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 48.856613,
+        "lng": 5.152222
+      }
+    },
+    {
+      "id": "marpla-dc-1-ext-l06",
+      "position": {
+        "x": 260,
+        "y": 520
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 51.507351,
+        "lng": 2.672242
+      }
+    },
+    {
+      "id": "marpla-dc-2-s01",
+      "position": {
+        "x": 840,
+        "y": 120
+      },
+      "icon": "spine",
+      "level": "1",
+      "geoCoordinates": {
+        "lat": 50.755745,
+        "lng": 11.162831
+      }
+    },
+    {
+      "id": "marpla-dc-2-s02",
+      "position": {
+        "x": 840,
+        "y": 340
+      },
+      "icon": "spine",
+      "level": "1",
+      "geoCoordinates": {
+        "lat": 52.090823,
+        "lng": 10.662026
+      }
+    },
+    {
+      "id": "marpla-dc-2-wew-l01",
+      "position": {
+        "x": 1040,
+        "y": 0
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 50.836512,
+        "lng": 4.332121
+      }
+    },
+    {
+      "id": "marpla-dc-2-wew-l02",
+      "position": {
+        "x": 1040,
+        "y": 80
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 53.48725,
+        "lng": 1.852141
+      }
+    },
+    {
+      "id": "marpla-dc-2-priv-l03",
+      "position": {
+        "x": 1040,
+        "y": 220
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 51.575846,
+        "lng": 9.182932
+      }
+    },
+    {
+      "id": "marpla-dc-2-priv-l04",
+      "position": {
+        "x": 1040,
+        "y": 300
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 52.910924,
+        "lng": 8.682127
+      }
+    },
+    {
+      "id": "marpla-dc-2-ext-l05",
+      "position": {
+        "x": 1040,
+        "y": 440
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 51.656613,
+        "lng": 2.352222
+      }
+    },
+    {
+      "id": "marpla-dc-2-ext-l06",
+      "position": {
+        "x": 1040,
+        "y": 520
+      },
+      "icon": "leaf",
+      "level": "2",
+      "geoCoordinates": {
+        "lat": 54.307351,
+        "lng": -0.127758
+      }
+    },
+    {
+      "id": "marpla-dc-1-fw01",
+      "position": {
+        "x": -180,
+        "y": 260
+      },
+      "icon": "firewall",
+      "level": "3",
+      "geoCoordinates": {
+        "lat": 50.755745,
+        "lng": 7.203033
+      }
+    },
+    {
+      "id": "marpla-dc-2-fw01",
+      "position": {
+        "x": 1520,
+        "y": 260
+      },
+      "icon": "firewall",
+      "level": "3",
+      "geoCoordinates": {
+        "lat": 52.090823,
+        "lng": 6.702228
+      }
+    }
+  ],
+  "edgeAnnotations": [],
+  "aliasEndpointAnnotations": [],
+  "viewerSettings": {}
+}

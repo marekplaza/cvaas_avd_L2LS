@@ -17,92 +17,203 @@ topology:
             - ../../clab/cv-onboarding-token:/mnt/flash/cv-onboarding-token:ro
     defaults:
         kind: ceos
+    # graph-* labels: layout for the containerlab VS Code TopoViewer and `containerlab graph`
+    # (level 1 = EVPN gateways/spines, 2 = leaf pairs, 3 = firewall node). Horizontal and mirrored:
+    # FW1 | DC1 leaf pairs (l01 above l02) | DC1 spines | DC2 spines | DC2 leaf pairs | FW2
     nodes:
         marpla-dc-1-s01:
             mgmt-ipv4: 10.30.11.1
+            labels:
+                graph-level: "1"
+                graph-icon: spine
+                graph-group: dc1-gateways
+                graph-posX: "480"
+                graph-posY: "120"
             binds:
             - sn/marpla-dc-1-s01.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-1-s01.cfg
         marpla-dc-1-s02:
             mgmt-ipv4: 10.30.11.2
+            labels:
+                graph-level: "1"
+                graph-icon: spine
+                graph-group: dc1-gateways
+                graph-posX: "480"
+                graph-posY: "340"
             binds:
             - sn/marpla-dc-1-s02.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-1-s02.cfg
         marpla-dc-1-wew-l01:
             mgmt-ipv4: 10.30.12.1
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc1-wew
+                graph-posX: "260"
+                graph-posY: "0"
             binds:
             - sn/marpla-dc-1-wew-l01.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-1-wew-l01.cfg
         marpla-dc-1-wew-l02:
             mgmt-ipv4: 10.30.12.2
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc1-wew
+                graph-posX: "260"
+                graph-posY: "80"
             binds:
             - sn/marpla-dc-1-wew-l02.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-1-wew-l02.cfg
         marpla-dc-1-priv-l03:
             mgmt-ipv4: 10.30.12.3
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc1-priv
+                graph-posX: "260"
+                graph-posY: "220"
             binds:
             - sn/marpla-dc-1-priv-l03.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-1-priv-l03.cfg
         marpla-dc-1-priv-l04:
             mgmt-ipv4: 10.30.12.4
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc1-priv
+                graph-posX: "260"
+                graph-posY: "300"
             binds:
             - sn/marpla-dc-1-priv-l04.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-1-priv-l04.cfg
         marpla-dc-1-ext-l05:
             mgmt-ipv4: 10.30.12.5
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc1-ext
+                graph-posX: "260"
+                graph-posY: "440"
             binds:
             - sn/marpla-dc-1-ext-l05.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-1-ext-l05.cfg
         marpla-dc-1-ext-l06:
             mgmt-ipv4: 10.30.12.6
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc1-ext
+                graph-posX: "260"
+                graph-posY: "520"
             binds:
             - sn/marpla-dc-1-ext-l06.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-1-ext-l06.cfg
         marpla-dc-2-s01:
             mgmt-ipv4: 10.30.21.1
+            labels:
+                graph-level: "1"
+                graph-icon: spine
+                graph-group: dc2-gateways
+                graph-posX: "840"
+                graph-posY: "120"
             binds:
             - sn/marpla-dc-2-s01.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-2-s01.cfg
         marpla-dc-2-s02:
             mgmt-ipv4: 10.30.21.2
+            labels:
+                graph-level: "1"
+                graph-icon: spine
+                graph-group: dc2-gateways
+                graph-posX: "840"
+                graph-posY: "340"
             binds:
             - sn/marpla-dc-2-s02.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-2-s02.cfg
         marpla-dc-2-wew-l01:
             mgmt-ipv4: 10.30.22.1
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc2-wew
+                graph-posX: "1040"
+                graph-posY: "0"
             binds:
             - sn/marpla-dc-2-wew-l01.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-2-wew-l01.cfg
         marpla-dc-2-wew-l02:
             mgmt-ipv4: 10.30.22.2
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc2-wew
+                graph-posX: "1040"
+                graph-posY: "80"
             binds:
             - sn/marpla-dc-2-wew-l02.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-2-wew-l02.cfg
         marpla-dc-2-priv-l03:
             mgmt-ipv4: 10.30.22.3
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc2-priv
+                graph-posX: "1040"
+                graph-posY: "220"
             binds:
             - sn/marpla-dc-2-priv-l03.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-2-priv-l03.cfg
         marpla-dc-2-priv-l04:
             mgmt-ipv4: 10.30.22.4
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc2-priv
+                graph-posX: "1040"
+                graph-posY: "300"
             binds:
             - sn/marpla-dc-2-priv-l04.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-2-priv-l04.cfg
         marpla-dc-2-ext-l05:
             mgmt-ipv4: 10.30.22.5
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc2-ext
+                graph-posX: "1040"
+                graph-posY: "440"
             binds:
             - sn/marpla-dc-2-ext-l05.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-2-ext-l05.cfg
         marpla-dc-2-ext-l06:
             mgmt-ipv4: 10.30.22.6
+            labels:
+                graph-level: "2"
+                graph-icon: leaf
+                graph-group: dc2-ext
+                graph-posX: "1040"
+                graph-posY: "520"
             binds:
             - sn/marpla-dc-2-ext-l06.txt:/mnt/flash/ceos-config:ro
             startup-config: init-configs/marpla-dc-2-ext-l06.cfg
         marpla-dc-1-fw01:
             mgmt-ipv4: 10.30.19.1
+            labels:
+                graph-level: "3"
+                graph-icon: firewall
+                graph-group: dc1-fw
+                graph-posX: "-180"
+                graph-posY: "260"
             startup-config: init-configs/marpla-dc-1-fw01.cfg
         marpla-dc-2-fw01:
             mgmt-ipv4: 10.30.29.1
+            labels:
+                graph-level: "3"
+                graph-icon: firewall
+                graph-group: dc2-fw
+                graph-posX: "1520"
+                graph-posY: "260"
             startup-config: init-configs/marpla-dc-2-fw01.cfg
 
     links:
