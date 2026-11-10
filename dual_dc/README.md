@@ -121,6 +121,7 @@ Testy bram EVPN i stabilności (`tests/`):
 | `fw_test.sh` | test płaszczyzny danych z węzłów FW |
 | `tests/` | testy bram EVPN: DF (`check_df.sh`), duplikaty BUM (`dup_test.sh`), soak/flapy BFD (`soak.sh`) |
 | `docs/*.png`, `tools/gen_png.py` | schematy PNG do README (generator: matplotlib) |
+| `docs/topology-clab.svg`, `tools/gen_clab_svg.py` | diagram w stylu TopoViewera z pozycji w `clab/topology.clab.yml.annotations.json` |
 | `topology.drawio`, `tools/gen_drawio.py` | diagram edytowalny (fizyczny, logiczny, P2P per DC, RD/RT) |
 | `clab/` | topologia, init-configi, numery seryjne `CAFECAFECAFE{dc}1xx` |
 
